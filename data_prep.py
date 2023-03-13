@@ -2,50 +2,34 @@
 
 
 from pandas.api.types import CategoricalDtype
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    import pandas as pd
+#from typing import TYPE_CHECKING
+#if TYPE_CHECKING:
+import pandas as pd
 
 category_notatall_to_daily = CategoricalDtype(['Not at all',  'Less than weekly', 'Once or twice per week',
        'Three or four times per week', 'Daily or almost daily'], ordered=True)
-categories = {
-  'IndigenousStatus': CategoricalDtype([ 'Neither Aboriginal nor Torres Strait Islander', 
-       'Aboriginal but not Torres Strait Islander',
-       'Both Aboriginal and Torres Strait Islander',
-       'Torres Strait Islander but not Aboriginal']),
-  
-  'ClientType' : CategoricalDtype([
-        'ownuse', 'othersuse', 'PsychiatristReferral'
-    ]),
-
-  'PDCSubstanceOrGambling': CategoricalDtype([
-    'Ethanol', 'Amphetamines, n.f.d.', 'Heroin', 'Methamphetamine',
-       'Cannabinoids', 'Cannabinoids and Related Drugs, n.f.d.',
-       'MDMA/Ecstasy', 'Amphetamines, n.f.d', 'Zolpidem',
-       'Benzodiazepines, n.f.d.', 'Methadone',
-       'Pharmaceutical Opioids, n.f.d.', 'Caffeine', 'Cocaine',
-       'Amphetamine', 'Oxycodone', 'Alcohols, n.e.c.',
-       'Peptide Hormones, Mimetics and Analogues, n.e.c.'
-  ]),
-  'PDCGoals': CategoricalDtype([['Reduce Use', 'Maintain Abstinence', 'Cease Use',
-       'Maintain Current level of use', 'Reduce Harms',
-       'Maintain Recovery', 'Maintain Current Level of Use']]),
-  
-  'Past4WkUseLedToProblemsWithFamilyFriend':category_notatall_to_daily,
+predef_categories = {
+    'Past4WkUseLedToProblemsWithFamilyFriend':category_notatall_to_daily,
   'Past4WkHowOftenIllegalActivities':       category_notatall_to_daily,
   'Past4WkHowOftenMentalHealthCausedProblems': category_notatall_to_daily,
-  'Past4WkHowOftenPhysicalHealthCausedProblems': category_notatall_to_daily,
+  'Past4WkHowOftenPhysicalHealthCausedProblems': category_notatall_to_daily, 
 }
 
 question_list_for_categories = [
+  'AssessmentType',
    'IndigenousStatus',
   'ClientType',
+  'CountryOfBirth',
+  'LivingArrangement',
   'PDCSubstanceOrGambling',
   'PDCGoals',  
   'Past4WkUseLedToProblemsWithFamilyFriend',
   'Past4WkHowOftenIllegalActivities',
   'Past4WkHowOftenMentalHealthCausedProblems',
-  'Past4WkHowOftenPhysicalHealthCausedProblems'
+  'Past4WkHowOftenPhysicalHealthCausedProblems',
+  'HowImportantIsChangeToYou',
+  'HaveAnySocialSupport',
+  'DoYouFeelSafeWhereYouLive'
 
 ]
 
@@ -54,13 +38,30 @@ def define_category(df:pd.DataFrame, question:str) -> CategoricalDtype:
   return CategoricalDtype(unique_list)
   
 
-def define_category_for_question(df:pd.DataFrame, category_name:str):  
-  category_type = define_category(df, category_name)
-  df[category_name] = df[category_name].astype(category_type)
+def define_category_for_question(df:pd.DataFrame, category_name:str):
+  category_type = predef_categories.get(category_name,
+                         define_category(df, category_name) )
+  return category_type
+  # if category_name in predef_categories:
+  #   category_type =  
+  # category_type = define_category(df, category_name)
+  
+  # df[category_name] = df[category_name].astype(category_type)
+
+
   # df[category_name] = df[category_name].astype(categories[category_name])
 
 
-
+def define_all_categories(df:pd.DataFrame):
+  category_nametypes = [(category
+                          , define_category_for_question(df, category)
+                        )
+                        for category in question_list_for_categories]
+  
+      
+  for category_name, category_type in category_nametypes:
+    df[category_name] = df[category_name].astype(category_type)
+  
 # def define_categories1(adom):
 # # categorize the data
 #   # TODO : convert "Three or four times per week" -> Three or four times A week
@@ -127,3 +128,36 @@ def convert_dtypes(adom):
     if str(adom[a].dtype) == "float64" or adom[a].dtype == 'O':
       #print (f" a :{a}")
       adom[a] = adom[a].astype(int,errors='ignore')
+
+
+
+
+
+  #      'IndigenousStatus': CategoricalDtype([ 'Neither Aboriginal nor Torres Strait Islander', 
+  #      'Aboriginal but not Torres Strait Islander',
+  #      'Both Aboriginal and Torres Strait Islander',
+  #      'Torres Strait Islander but not Aboriginal']),
+  
+  # 'ClientType' : CategoricalDtype([
+  #       'ownuse', 'othersuse', 'PsychiatristReferral'
+  #   ]),
+
+  # 'PDCSubstanceOrGambling': CategoricalDtype([
+  #   'Ethanol', 'Amphetamines, n.f.d.', 'Heroin', 'Methamphetamine',
+  #      'Cannabinoids', 'Cannabinoids and Related Drugs, n.f.d.',
+  #      'MDMA/Ecstasy', 'Amphetamines, n.f.d', 'Zolpidem',
+  #      'Benzodiazepines, n.f.d.', 'Methadone',
+  #      'Pharmaceutical Opioids, n.f.d.', 'Caffeine', 'Cocaine',
+  #      'Amphetamine', 'Oxycodone', 'Alcohols, n.e.c.',
+  #      'Peptide Hormones, Mimetics and Analogues, n.e.c.'
+  # ]),
+  # 'PDCGoals': CategoricalDtype([['Reduce Use', 'Maintain Abstinence', 'Cease Use',
+  #      'Maintain Current level of use', 'Reduce Harms',
+  #      'Maintain Recovery', 'Maintain Current Level of Use']]),
+   
+  # 'HowImportantIsChangeToYou': ['Critical for me. I need to change',
+  #      "Really important. I'd like to change",
+  #      "Not really important. I don't really care if I change or not",
+  #      "Not at all. I don't want to change"]
+  
+  # # 'MethodOfUse'
