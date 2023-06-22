@@ -41,7 +41,7 @@ class SampleTablesQuery(object):
         from azure.data.tables import TableClient
         from azure.core.exceptions import HttpResponseError
     
-        print("Entities with 25 < Value < 50")
+        # print("Entities with 25 < Value < 50")
         # [START query_entities]
         with TableClient.from_connection_string(self.connection_string, self.table_name) as table_client:
             try:
@@ -62,6 +62,8 @@ def get_json_result(atom:TableEntity):
       result  = {
           "PartitionKey": atom.get("PartitionKey"),
           "RowKey" : atom.get("RowKey"),
+          "Program": atom.get("Program"),
+          "SurveyName": atom.get("SurveyName"),
           "SurveyData": atom.get("SurveyData",{})
           #"SurveyData": survey_data
       }
@@ -70,23 +72,24 @@ def get_json_result(atom:TableEntity):
 # def build_query_components(filter):
 #   name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper"
 
-def main() -> list[dict]:
-    stq = SampleTablesQuery()
+# def main() -> list[dict]:
+#     stq = SampleTablesQuery()
 
-    fields = [u"PartitionKey", u"RowKey", u"SurveyData"]
-    assessment_date_limits = {u"lower": 20211201, u"upper": 20220110}
-    name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper"
-    results = [
-         get_json_result(json_atom) 
-         for json_atom in 
-         stq.query_atoms(fields, filter_template=name_filter, query_params=assessment_date_limits)
-         ]
-    return results
+#     fields = [u"PartitionKey", u"RowKey", u"Progam",  u"SurveyName", u"SurveyData"]
+#     assessment_date_limits = {u"lower": 20211201, u"upper": 20220110}
+    
+#     name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper and IsActive eq 1 and Progam ne 'TEST' and Status eq 'Complete'"
+#     results = [
+#          get_json_result(json_atom) 
+#          for json_atom in 
+#          stq.query_atoms(fields, filter_template=name_filter, query_params=assessment_date_limits)
+#          ]
+#     return results
 
 
-if __name__ == "__main__":
-  results = main()
-  print(results)
+# if __name__ == "__main__":
+#   results = main()
+#   print(results)
     
         # stq.insert_random_entities()
         # stq.sample_query_entities()

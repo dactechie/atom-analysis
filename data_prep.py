@@ -1,6 +1,4 @@
 
-
-
 from pandas.api.types import CategoricalDtype
 #from typing import TYPE_CHECKING
 #if TYPE_CHECKING:
@@ -16,6 +14,7 @@ predef_categories = {
 }
 
 question_list_for_categories = [
+  'Program',
   'AssessmentType',
    'IndigenousStatus',
   'ClientType',
@@ -42,14 +41,6 @@ def define_category_for_question(df:pd.DataFrame, category_name:str):
   category_type = predef_categories.get(category_name,
                          define_category(df, category_name) )
   return category_type
-  # if category_name in predef_categories:
-  #   category_type =  
-  # category_type = define_category(df, category_name)
-  
-  # df[category_name] = df[category_name].astype(category_type)
-
-
-  # df[category_name] = df[category_name].astype(categories[category_name])
 
 
 def define_all_categories(df:pd.DataFrame):
@@ -58,10 +49,52 @@ def define_all_categories(df:pd.DataFrame):
                         )
                         for category in question_list_for_categories]
   
-      
+  df1 = df.copy()
   for category_name, category_type in category_nametypes:
-    df[category_name] = df[category_name].astype(category_type)
+    df1[category_name] = df[category_name].astype(category_type)
   
+  return df1
+  
+
+# Limit Client by Number of ADOMs done
+def limit_by_num_atoms(atom, num_atoms=3, gt_or_eq='>='):
+  if gt_or_eq == '>':
+    fn = lambda x: len(x) > num_atoms
+  elif gt_or_eq == '=':
+    fn = lambda x: len(x) == num_atoms
+  else:
+    fn = lambda x: len(x) >= num_atoms
+  
+  #https://stackoverflow.com/questions/17109419/pandas-filtering-pivot-table-rows-where-count-is-fewer-than-specified-value
+  return  atom[atom.groupby('PartitionKey')['PartitionKey'].transform(fn).astype('bool')].reset_index(drop=True) 
+
+
+  # WARNING : keep one of the duplicates (TODO)
+  # checks if enough days have passed between each of the ADOM Collection-dates for a client.
+def remove_duplicates_foreach_client(adom):
+  # get a true/ false result for each Client ID
+  res = adom.groupby('PartitionKey').apply(lambda grp: has_no_duplicates(grp['AssessmentDate'].diff()))
+  # filter on 'true' i.e. no duplicates
+  return adom[ adom['PartitionKey'].isin(res[res.values].index) ]
+
+# checks if none the time-deltas(in days) in a set of passed-in values, were within 21 days 
+def has_no_duplicates(adiff):
+  return not any(d.days < 21 for d in adiff)  
+
+
+def convert_dtypes(adom):
+  adom['AssessmentDate'] = pd.to_datetime(adom['AssessmentDate'],format='%d/%m/%Y',dayfirst=True)
+  adom = adom.fillna(0)
+
+  adom = adom.astype(int,errors='ignore')
+  how_many_cols = adom.filter(regex = 'ow many').columns  # numeric columns
+  print(how_many_cols)
+  for a in how_many_cols:
+    adom[a] = pd.to_numeric(pd.Series(adom[str(a)]), errors='ignore')  
+    if str(adom[a].dtype) == "float64" or adom[a].dtype == 'O':
+      #print (f" a :{a}")
+      adom[a] = adom[a].astype(int,errors='ignore')
+
 # def define_categories1(adom):
 # # categorize the data
 #   # TODO : convert "Three or four times per week" -> Three or four times A week
@@ -89,46 +122,6 @@ def define_all_categories(df:pd.DataFrame):
 #   # convert categorical fields to ints for calculations
 #   cat_columns = adom.select_dtypes(['category']).columns
 #   adom[cat_columns] = adom[cat_columns].apply(lambda x: x.cat.codes)
-
-
-# Limit Client by Number of ADOMs done
-def limit_by_num_adoms(atom, num_atoms=3, gt_or_eq='>='):
-  if gt_or_eq == '>':
-    fn = lambda x: len(x) > num_atoms
-  elif gt_or_eq == '=':
-    fn = lambda x: len(x) == num_atoms
-  else:
-    fn = lambda x: len(x) >= num_atoms
-  
-  #https://stackoverflow.com/questions/17109419/pandas-filtering-pivot-table-rows-where-count-is-fewer-than-specified-value
-  return  atom[atom.groupby('PartitionKey')['PartitionKey'].transform(fn).astype('bool')].reset_index(drop=True) 
-
-
-  # checks if enough days have passed between each of the ADOM Collection-dates for a client.
-def remove_duplicates_foreach_client(adom):
-  # get a true/ false result for each Client ID
-  res = adom.groupby('PartitionKey').apply(lambda grp: has_no_duplicates(grp['AssessmentDate'].diff()))
-  # filter on 'true' i.e. no duplicates
-  return adom[ adom['PartitionKey'].isin(res[res.values].index) ]
-
-# checks if none the time-deltas(in days) in a set of passed-in values, were within 21 days 
-def has_no_duplicates(adiff):
-  return not any(d.days < 21 for d in adiff)  
-
-
-def convert_dtypes(adom):
-  adom['AssessmentDate'] = pd.to_datetime(adom['AssessmentDate'],format='%d/%m/%Y',dayfirst=True)
-  adom = adom.fillna(0)
-
-  adom = adom.astype(int,errors='ignore')
-  how_many_cols = adom.filter(regex = 'ow many').columns  # numeric columns
-  print(how_many_cols)
-  for a in how_many_cols:
-    adom[a] = pd.to_numeric(pd.Series(adom[str(a)]), errors='ignore')  
-    if str(adom[a].dtype) == "float64" or adom[a].dtype == 'O':
-      #print (f" a :{a}")
-      adom[a] = adom[a].astype(int,errors='ignore')
-
 
 
 

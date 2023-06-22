@@ -1,10 +1,28 @@
 import json
 import re
 import pandas as pd
+from azutil.az_tables_query import SampleTablesQuery, get_json_result
 # import altair as alt
 from data_config import survey_datacols
 # from utils.fromstr import get_date_from_yyyymmdd
 
+def get_results(start_date, end_date) -> list[dict]:
+    stq = SampleTablesQuery()
+
+    # fields = [u"PartitionKey", u"RowKey", u"SurveyData"]
+    # assessment_date_limits = {u"lower": 20220701, u"upper": 20230310}
+    assessment_date_limits = {u"lower": start_date, u"upper": end_date}
+
+    fields = [u"PartitionKey", u"RowKey", u"Program",  u"SurveyName", u"SurveyData"]
+
+    name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper and IsActive eq 1 and Program ne 'TEST' and Status eq 'Complete'"
+
+    results = [
+         get_json_result(json_atom) 
+         for json_atom in 
+         stq.query_atoms(fields, filter_template=name_filter, query_params=assessment_date_limits)
+         ]
+    return results
 
 def do_assessment_date(df:pd.DataFrame):
   # Changed AssessmentDate to dtype str
@@ -20,6 +38,7 @@ def get_first_of_list(pdfdictlist): # same
     return None  
 
 
+# TODO: what about exlcuding Substance/Relatioship ITSP Issues, Goals Notes
 def filter_cols(df:pd.DataFrame):
   orig_cols = df.columns.to_list() 
   results = survey_datacols
@@ -52,6 +71,7 @@ def get_all_data(filename:str) -> pd.DataFrame:
   
   # ATOM['AssessmentDate'] = do_assessment_date(ATOM)
   return filter_cols( atoms_allcols_expanded)
+
 
 # def do_viz():
 #   alt.Chart(df).mark_circle().encode(

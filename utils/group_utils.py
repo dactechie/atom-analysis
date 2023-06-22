@@ -5,7 +5,9 @@ def range_average(range_str:str, separator:str):
   return (int(two_ints[0])+int(two_ints[1]))/2
 
 
-
+"""
+  limit the dataset to only those clients who have done at least min_num_assessments
+"""
 def limit_pkey_num_assessments(df, min_num_assessments):
 
     g = df.groupby('PartitionKey')
