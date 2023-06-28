@@ -10,10 +10,10 @@ def range_average(range_str:str, separator:str):
 """
 def limit_pkey_num_assessments(df, min_num_assessments):
 
-    g = df.groupby('PartitionKey')
-    counts =  g['PartitionKey'].count()
+    g = df.groupby('SLK')
+    counts =  g['SLK'].count()
     gt2_ATOM_SLKs = counts[ counts >= min_num_assessments ].index.tolist()
-    df_gt2 = df [ df['PartitionKey'].isin(gt2_ATOM_SLKs) ]
+    df_gt2 = df [ df['SLK'].isin(gt2_ATOM_SLKs) ]
 
     return df_gt2
 
@@ -32,6 +32,7 @@ def first_n_medians(g, col:str, min_atoms: int):
   nth_medians = [np.median(g.nth(i).loc[:, col]) for i in range(min_atoms) ]
   return nth_medians
     
+
     
 # grp.get_group('YKSLA240819972')
 # grp.nth(1)['SDS_Score']

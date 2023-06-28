@@ -1,60 +1,54 @@
 
-from pandas.api.types import CategoricalDtype
-#from typing import TYPE_CHECKING
-#if TYPE_CHECKING:
+import json
 import pandas as pd
 
-category_notatall_to_daily = CategoricalDtype(['Not at all',  'Less than weekly', 'Once or twice per week',
-       'Three or four times per week', 'Daily or almost daily'], ordered=True)
-predef_categories = {
-    'Past4WkUseLedToProblemsWithFamilyFriend':category_notatall_to_daily,
-  'Past4WkHowOftenIllegalActivities':       category_notatall_to_daily,
-  'Past4WkHowOftenMentalHealthCausedProblems': category_notatall_to_daily,
-  'Past4WkHowOftenPhysicalHealthCausedProblems': category_notatall_to_daily, 
-}
+from data_config import keep_parent_fields
+from utils.dtypes import convert_dtypes
+from utils.df_ops import concat_drop_parent, \
+  drop_notes_by_regex, normalize_first_element,  drop_fields
 
-question_list_for_categories = [
-  'Program',
-  'AssessmentType',
-   'IndigenousStatus',
-  'ClientType',
-  'CountryOfBirth',
-  'LivingArrangement',
-  'PDCSubstanceOrGambling',
-  'PDCGoals',  
-  'Past4WkUseLedToProblemsWithFamilyFriend',
-  'Past4WkHowOftenIllegalActivities',
-  'Past4WkHowOftenMentalHealthCausedProblems',
-  'Past4WkHowOftenPhysicalHealthCausedProblems',
-  'HowImportantIsChangeToYou',
-  'HaveAnySocialSupport',
-  'DoYouFeelSafeWhereYouLive'
 
-]
-
-def define_category(df:pd.DataFrame, question:str) -> CategoricalDtype:  
-  unique_list = list(df[df[question].notna()][question].unique())
-  return CategoricalDtype(unique_list)
+def get_surveydata_expanded(df:pd.DataFrame) -> pd.DataFrame:
+  # https://dschoenleber.github.io/pandas-json-performance/
+  df_surveydata = df['SurveyData'].apply(json.loads)
+  df_surveydata_expanded:pd.DataFrame =  pd.json_normalize(df_surveydata.tolist(), max_level=1)
   
-
-def define_category_for_question(df:pd.DataFrame, category_name:str):
-  category_type = predef_categories.get(category_name,
-                         define_category(df, category_name) )
-  return category_type
+  df_surveydata_expanded = drop_fields(df_surveydata_expanded,keep_parent_fields)
+  df_final  = concat_drop_parent(df, df_surveydata_expanded, 'SurveyData')
+  return df_final
 
 
-def define_all_categories(df:pd.DataFrame):
-  category_nametypes = [(category
-                          , define_category_for_question(df, category)
-                        )
-                        for category in question_list_for_categories]
+def prep_dataframe(df:pd.DataFrame):
+   # because Program is in SurveyData
+ 
+  df2 = get_surveydata_expanded(df.copy())
+  df3 = drop_fields(df2,['ODC'])
   
-  df1 = df.copy()
-  for category_name, category_type in category_nametypes:
-    df1[category_name] = df[category_name].astype(category_type)
+  # df4 = prep(df3) # removes rows without PDC
+
+  df4 = drop_notes_by_regex(df3) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
+  df5 = normalize_first_element(df4,'PDC') #TODO: (df,'ODC') # only takes the first ODC   
   
-  return df1
+  df6 = df5[df5.PDCSubstanceOrGambling.notna()]
+
+  df6.loc[:,'Program'] = df6['RowKey'].str.split('_').str[0] # has to be made into category
+  df7 = convert_dtypes(df6)
+
+  # df.PDCAgeFirstUsed[(df.PDCAgeFirstUsed.notna()) & (df.PDCAgeFirstUsed != '')].astype(int)
+ # "Expected bytes, got a 'int' object", 'Conversion failed for column PDCAgeFirstUsed with type object'
+  df8 = drop_fields(df7, ['PDCAgeFirstUsed',\
+                           'PrimaryCaregiver','Past4WkAodRisks']) 
+  # 'cannot mix list and non-list, non-null values', 
+  # 'Conversion failed for column PrimaryCaregiver, Past4WkAodRisks with type object')
+
+  df8.drop(columns=['SLK'], inplace=True)
+  df8.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
+  df9 = df8.sort_values(by="AssessmentDate")
   
+  
+  return df9
+
+
 
 # Limit Client by Number of ADOMs done
 def limit_by_num_atoms(atom, num_atoms=3, gt_or_eq='>='):
@@ -69,32 +63,15 @@ def limit_by_num_atoms(atom, num_atoms=3, gt_or_eq='>='):
   return  atom[atom.groupby('PartitionKey')['PartitionKey'].transform(fn).astype('bool')].reset_index(drop=True) 
 
 
-  # WARNING : keep one of the duplicates (TODO)
-  # checks if enough days have passed between each of the ADOM Collection-dates for a client.
-def remove_duplicates_foreach_client(adom):
-  # get a true/ false result for each Client ID
-  res = adom.groupby('PartitionKey').apply(lambda grp: has_no_duplicates(grp['AssessmentDate'].diff()))
-  # filter on 'true' i.e. no duplicates
-  return adom[ adom['PartitionKey'].isin(res[res.values].index) ]
-
-# checks if none the time-deltas(in days) in a set of passed-in values, were within 21 days 
-def has_no_duplicates(adiff):
-  return not any(d.days < 21 for d in adiff)  
 
 
-def convert_dtypes(adom):
-  adom['AssessmentDate'] = pd.to_datetime(adom['AssessmentDate'],format='%d/%m/%Y',dayfirst=True)
-  adom = adom.fillna(0)
 
-  adom = adom.astype(int,errors='ignore')
-  how_many_cols = adom.filter(regex = 'ow many').columns  # numeric columns
-  print(how_many_cols)
-  for a in how_many_cols:
-    adom[a] = pd.to_numeric(pd.Series(adom[str(a)]), errors='ignore')  
-    if str(adom[a].dtype) == "float64" or adom[a].dtype == 'O':
-      #print (f" a :{a}")
-      adom[a] = adom[a].astype(int,errors='ignore')
 
+# def prep(df):
+#   df = drop_notes_byregex(df) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
+#   df = expand_nested_dictlist_firstelem(df,'PDC') # (df,'ODC') # only takes the first ODC   
+#   convert_to_datetime(df,'AssessmentDate')
+#   return df
 # def define_categories1(adom):
 # # categorize the data
 #   # TODO : convert "Three or four times per week" -> Three or four times A week
