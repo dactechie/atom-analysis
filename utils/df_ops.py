@@ -1,7 +1,9 @@
 
 #from typing import TYPE_CHECKING
 #if TYPE_CHECKING:
+import os
 import pandas as pd
+
 
 
 def drop_fields(df:pd.DataFrame, fieldnames:list or str or tuple):
@@ -9,9 +11,11 @@ def drop_fields(df:pd.DataFrame, fieldnames:list or str or tuple):
   return df2
 
 
-def read_parquet(file_path:str) -> pd.DataFrame:
-  df = pd.read_parquet(file_path)
-  return df
+def read_parquet(file_path:str) -> pd.DataFrame|None:
+  if os.path.exists(file_path):
+    df = pd.read_parquet(file_path)
+    return df
+  return None
 
 
 def concat_drop_parent(df, df2 ,parent_name:str) -> pd.DataFrame:

@@ -5,14 +5,16 @@ import pandas as pd
 from azutil.helper import get_results
 from .df_ops import read_parquet 
 
-def get_data(start_date, end_date, download_filepath:str, cache=False):
+
+
+def get_data(start_date, end_date, download_filepath:str, cache=False) -> pd.DataFrame|None:
   #
   # get from ATOM Azure DB and save to disk
   #
   if cache:
-    if os.path.exists(f"{download_filepath}.parquet"):
+    if os.path.exists(f"{download_filepath}"):
       print("INFO: Using cached data")
-      df = read_parquet(f"{download_filepath}.parquet")
+      df = read_parquet(f"{download_filepath}")
       return df
     else:
       print("INFO: No cached data found, loading from DB")
@@ -23,5 +25,5 @@ def get_data(start_date, end_date, download_filepath:str, cache=False):
     return None
   
   df = pd.DataFrame.from_records(results)
-  df.to_parquet(f"{download_filepath}.parquet")
+  df.to_parquet(f"{download_filepath}")
   return df

@@ -8,6 +8,25 @@ from utils.df_ops import concat_drop_parent, \
   drop_notes_by_regex, normalize_first_element,  drop_fields
 
 
+"""
+  limit the dataset to only those clients who have done at least min_num_assessments
+"""
+def limit_min_num_assessments(df, min_num_assessments):
+
+    g = df.groupby('SLK')
+    counts =  g['SLK'].count()
+    gt2_ATOM_SLKs = counts[ counts >= min_num_assessments ].index.tolist()
+    df_gt2 = df [ df['SLK'].isin(gt2_ATOM_SLKs) ]
+
+    return df_gt2
+
+
+def limit_clients_active_inperiod(df, start_date, end_date):
+  # clients_inperiod = df[ (df.AssessmentDate >=  '2022-07-01') & (df.AssessmentDate <= '2023-06-30')].SLK.unique()
+  clients_inperiod = df[ (df.AssessmentDate >=  start_date) & (df.AssessmentDate <= end_date)].SLK.unique()
+  df_active_clients = df [ df['SLK'].isin(clients_inperiod) ]
+  return df_active_clients
+
 def get_surveydata_expanded(df:pd.DataFrame) -> pd.DataFrame:
   # https://dschoenleber.github.io/pandas-json-performance/
   df_surveydata = df['SurveyData'].apply(json.loads)
@@ -49,18 +68,18 @@ def prep_dataframe(df:pd.DataFrame):
   return df9
 
 
-
-# Limit Client by Number of ADOMs done
-def limit_by_num_atoms(atom, num_atoms=3, gt_or_eq='>='):
-  if gt_or_eq == '>':
-    fn = lambda x: len(x) > num_atoms
-  elif gt_or_eq == '=':
-    fn = lambda x: len(x) == num_atoms
-  else:
-    fn = lambda x: len(x) >= num_atoms
+# slow compared to group_utils.limit_pkey_num_assessments
+# # Limit Client by Number of ADOMs done
+# def limit_by_num_atoms(atom, num_atoms=3, gt_or_eq='>='):
+#   if gt_or_eq == '>':
+#     fn = lambda x: len(x) > num_atoms
+#   elif gt_or_eq == '=':
+#     fn = lambda x: len(x) == num_atoms
+#   else:
+#     fn = lambda x: len(x) >= num_atoms
   
-  #https://stackoverflow.com/questions/17109419/pandas-filtering-pivot-table-rows-where-count-is-fewer-than-specified-value
-  return  atom[atom.groupby('PartitionKey')['PartitionKey'].transform(fn).astype('bool')].reset_index(drop=True) 
+#   #https://stackoverflow.com/questions/17109419/pandas-filtering-pivot-table-rows-where-count-is-fewer-than-specified-value
+#   return  atom[atom.groupby('PartitionKey')['PartitionKey'].transform(fn).astype('bool')].reset_index(drop=True) 
 
 
 
