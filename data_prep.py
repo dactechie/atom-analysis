@@ -4,9 +4,9 @@ import pandas as pd
 
 from data_config import keep_parent_fields
 from utils.dtypes import convert_dtypes
-from utils.df_ops import concat_drop_parent, \
-  drop_notes_by_regex, normalize_first_element,  drop_fields
-
+from utils.df_ops_base import concat_drop_parent, \
+                            drop_notes_by_regex \
+                      , normalize_first_element,  drop_fields
 
 """
   limit the dataset to only those clients who have done at least min_num_assessments
@@ -42,13 +42,11 @@ def prep_dataframe(df:pd.DataFrame):
  
   df2 = get_surveydata_expanded(df.copy())
   df3 = drop_fields(df2,['ODC'])
-  
-  # df4 = prep(df3) # removes rows without PDC
-
+ 
   df4 = drop_notes_by_regex(df3) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
   df5 = normalize_first_element(df4,'PDC') #TODO: (df,'ODC') # only takes the first ODC   
   
-  df6 = df5[df5.PDCSubstanceOrGambling.notna()]
+  df6 = df5[df5.PDCSubstanceOrGambling.notna()]# removes rows without PDC
 
   df6.loc[:,'Program'] = df6['RowKey'].str.split('_').str[0] # has to be made into category
   df7 = convert_dtypes(df6)

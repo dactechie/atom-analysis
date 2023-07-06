@@ -3,8 +3,13 @@ import os
 import pandas as pd
 
 from azutil.helper import get_results
-from .df_ops import read_parquet 
 
+
+def read_parquet(file_path:str) -> pd.DataFrame|None:
+  if os.path.exists(file_path):
+    df = pd.read_parquet(file_path)
+    return df
+  return None
 
 
 def get_data(start_date, end_date, download_filepath:str, cache=False) -> pd.DataFrame|None:

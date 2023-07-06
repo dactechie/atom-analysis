@@ -1,14 +1,20 @@
 import pandas as pd
 import altair as alt
 
+COLOR_RANGE = ['red', 'blue', 'black', 'green', 'yellow', 'orange']
 
-def get_chart_for_means(assessment_tags, means, contribs):
+def get_chart_for_means(question_list, assessment_tags, means, contribs):
   nitems = len(means)
+  # category_labels = [] 
+  # for question in question_list:
+  #   category_labels.append(question*nitems)
+  category_labels = [question for question in question_list for _ in range(nitems)]
+
   # # Create DataFrames for the mean values
   df = pd.DataFrame({
       'Assessment': assessment_tags,
       'MeanValue': means,
-      'Category': ['Physical Health']*nitems, #+ ['Mental Health']*nitems,
+      'Category': category_labels, #['Physical Health']*nitems, #+ ['Mental Health']*nitems,
       'Count': contribs #[len(first_assessments), len(last_assessments), len(first_assessments), len(last_assessments)]      
   })
 
@@ -28,7 +34,7 @@ def get_chart_for_means(assessment_tags, means, contribs):
       x='Assessment',
       y='MeanValue',
       # color=alt.Color('Category', scale=alt.Scale(domain=['Physical Health', 'Mental Health'], range=['red', 'blue'])),
-      color=alt.Color('Category', scale=alt.Scale(domain=['Physical Health'], range=['red'])),
+      color=alt.Color('Category', scale=alt.Scale(domain=question_list, range=COLOR_RANGE[:nitems])),
       tooltip=['Assessment', 'MeanValue', 'Category', 'Count']
   ).properties(
       width=600  # Specify the width here

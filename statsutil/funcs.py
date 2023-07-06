@@ -1,10 +1,21 @@
 # import pandas as pd
+# from utils.group_utils import getrecs_w_min_numvals_forcol, chrono_rank_within_clientgroup
+
+def get_mean_xcontribs_of_nth_assessment_for_question(df, nth, question):
+  nth_surveys = df[df['survey_rank'] == nth]
+  mean_rounded = 0
+  if nth_surveys[question].dtype.name == 'category':
+    mean_rounded = round(nth_surveys[question].cat.codes.mean(),2)
+  else:
+    mean_rounded = round(nth_surveys[question].mean(),2)
+  
+  return mean_rounded, len(nth_surveys)
 
 
 
     
-def get_df_forclients_with_atleast_n_surveys(df, n):
-  clientSLKs = df[df['survey_rank'] == n].SLK.unique() # clients having a rank=n survey
+def get_df_forclients_with_atleast_n_surveys(df, min_surveys):
+  clientSLKs = df[df['survey_rank'] == min_surveys].SLK.unique() # clients having a rank=n survey
   return df[df['SLK'].isin(clientSLKs)]
 
 def get_nth_survey_values_for_question(df, nth, question):
