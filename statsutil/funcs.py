@@ -11,16 +11,26 @@ def get_mean_xcontribs_of_nth_assessment_for_question(df, nth, question):
   
   return mean_rounded, len(nth_surveys)
 
+def get_nmeans_ncontribs(chosen_surveys, df, field_name:str):
+  averages = []
+  nth_assessment_contribs =[]
+
+  for s_no in chosen_surveys:
+      average, n_contribs = get_mean_xcontribs_of_nth_assessment_for_question(df, s_no, field_name)
+      averages.append(average)
+      nth_assessment_contribs.append(n_contribs)
+      print(f"Survey {s_no} has {n_contribs} contributing asessments for {field_name}, with mean {average}")
+  return averages, nth_assessment_contribs
 
 
-    
-def get_df_forclients_with_atleast_n_surveys(df, min_surveys):
-  clientSLKs = df[df['survey_rank'] == min_surveys].SLK.unique() # clients having a rank=n survey
-  return df[df['SLK'].isin(clientSLKs)]
+# redundant : we use   getrecs_w_min_numvals_forcol to get question-wise min-num surveys  
+# def get_df_forclients_with_atleast_n_surveys(df, min_surveys):
+#   clientSLKs = df[df['survey_rank'] == min_surveys].SLK.unique() # clients having a rank=n survey
+#   return df[df['SLK'].isin(clientSLKs)]
 
-def get_nth_survey_values_for_question(df, nth, question):
-  nth_surveys = df[df['survey_rank'] == nth]
-  return nth_surveys[question]
+# def get_nth_survey_values_for_question(df, nth, question):
+#   nth_surveys = df[df['survey_rank'] == nth]
+#   return nth_surveys[question]
 
 # df_4 = get_df_forclients_with_atleast_n_surveys(pq_df, 4)
 # first = get_nth_survey_values_for_question(df_4, 1, 'Past4WkHowOftenPhysicalHealthCausedProblems')
