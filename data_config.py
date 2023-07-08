@@ -8,7 +8,7 @@ remove_if_under_threshold = {
           'Other': 2 # if under 2 percent of dataset, delete records
      }
 }
-category_yes_no = ['Yes', 'No']
+category_yes_no = CategoricalDtype(['Yes', 'No'])
 
 # TODO Fix:
 # Past4WkBeenArrested :'No', 'Yes', 'Yes - please provide details'
@@ -19,17 +19,23 @@ category_yes_no = ['Yes', 'No']
 # 311       [Memory Loss, Using Alone, Violence / Assault]
 # 7312                                        [Using Alone]
 # 7314    [Using Alone, Driving with drugs and/or alcoho...
+# HaveAnySocialSupport
+# Some            1698
+# A few           1583
+# Quite a lot     1181
+# A wide range     668
+# None             276
 
-
-category_feel_safe = ['Yes - Completely safe',
+category_feel_safe = CategoricalDtype(['Yes - Completely safe',
        'Mostly safe. Sometimes feel threatened',
        'Often feel unsafe / Occasionally experience violence',
-       'Never feel safe / Constantly exposed to violence',
-       'Never feel safe. Constantly exposed to violence',
-       'Often feel unsafe. Occasionally experience violence']
+       'Never feel safe / Constantly exposed to violence'      ])
 
-category_notatall_to_daily = CategoricalDtype(['Not at all',  'Less than weekly', 'Once or twice per week',
-       'Three or four times per week', 'Daily or almost daily'], ordered=True)
+category_notatall_to_daily = CategoricalDtype(['Not at all'
+                                               ,  'Less than weekly'
+                                               , 'Once or twice per week'
+                                               , 'Three or four times per week'
+                                               , 'Daily or almost daily'], ordered=True)
 
 # HowSatisfiedWithProgress
 category_notatall_to_extremely = CategoricalDtype([
@@ -38,70 +44,41 @@ category_notatall_to_extremely = CategoricalDtype([
 
 
 predef_categories = {
+    'Past4WkDailyLivingImpacted': category_notatall_to_daily,
     'Past4WkUseLedToProblemsWithFamilyFriend':category_notatall_to_daily,
   'Past4WkHowOftenIllegalActivities':       category_notatall_to_daily,
   'Past4WkHowOftenMentalHealthCausedProblems': category_notatall_to_daily,
   'Past4WkHowOftenPhysicalHealthCausedProblems': category_notatall_to_daily, 
   'Past4WkDifficultyFindingHousing': category_notatall_to_daily,
   'HowSatisfiedWithProgress': category_notatall_to_extremely,
-  # 'DoYouFeelSafeWhereYouLive': category_feel_safe,
+  'DoYouFeelSafeWhereYouLive': category_feel_safe,
   'Past4WkHadCaregivingResponsibilities': category_yes_no,
   'Past4WkBeenHospCallAmbulance': category_yes_no,
   'Past4WkAnyOtherAddictiveB': category_yes_no,
 }
 
-# ,'Staff','SurveyName',
-
 question_list_for_categories = [
   'Program',
-
   'Staff',
   'SurveyName',
-
   'AssessmentType',
+
   'IndigenousStatus',
   'ClientType',
   'CountryOfBirth',
   'LivingArrangement',
+
   'PDCSubstanceOrGambling',
-  'PDCGoals', 
-  
+  'PDCGoals',  
   'PDCMethodOfUse',
 
-  'Past4WkUseLedToProblemsWithFamilyFriend',
-  'Past4WkHowOftenIllegalActivities',
-  'Past4WkHowOftenMentalHealthCausedProblems',
-  'Past4WkHowOftenPhysicalHealthCausedProblems',
-  'Past4WkDifficultyFindingHousing',
   'HowImportantIsChangeToYou',
-  'HowSatisfiedWithProgress',
-  'HaveAnySocialSupport',
-  'DoYouFeelSafeWhereYouLive'
-
+  'HaveAnySocialSupport',  
 ]
 
-# toplevel_cols = [
-# 'PartitionKey',
-# # 'Program',
-# # 'AssessmentDate',
-# # 'AssessmentType',
-# 'SurveyData'
+question_list_for_categories = question_list_for_categories + list(predef_categories.keys())
 
-# ]
 
-# survey_datacols = [
-# 'PartitionKey',
-# #'RowKey',
-# 'Program',
-# #'Staff',
-# 'AssessmentDate',
-# 'SurveyName',
-# 'ClientType',
-# 'IndigenousStatus',
-# #'PDC',
-
-# 'HaveYouEverInjected'
-# ]
 # survey_datacols_preregex = [
 #    '.*_Score$'
 # ]
@@ -109,45 +86,21 @@ question_list_for_categories = [
 #    '^Past4Wk.*'
 # ]
 
-# cols = [
-# 'PartitionKey',
-# 'RowKey',
-# 'Program',
-# 'Staff',
-# 'AssessmentDate',
-# 'SurveyName',
-# 'ClientType',
-# 'IndigenousStatus',
-# 'PDC.PDCSubstanceOrGambling',
-# 'PDC.PDCMethodOfUse',
-# 'PDC.PDCDaysInLast28',
-# 'PDC.PDCUnits',
-# 'PDC.PDCHowMuchPerOccasion',
 
-# 'HaveYouEverInjected',
-# 'SDSIsAODUseOutOfControl',
-# 'SDSDoesMissingFixMakeAnxious',
-# 'SDSHowMuchDoYouWorryAboutAODUse',
-# 'SDSDoYouWishToStop',
-# 'SDSHowDifficultToStopOrGoWithout'
-# ]
-
-# rename_cols = {
-# 'PDC.PDCSubstanceOrGambling'		: 'PDCSubstanceOrGambling',
-# 'PDC.PDCMethodOfUse'		: 'PDCMethodOfUse',
-# 'PDC.PDCDaysInLast28'		: 'PDCDaysInLast28',
-# 'PDC.PDCUnits'		: 'PDCUnits',
-# 'PDC.PDCHowMuchPerOccasion'		: 'PDCHowMuchPerOccasion'
-# }
-
-
-# # categories : ,'Staff','SurveyName',
-
+# replace left(key) value with the right value in dataset
 option_variants = {
     'PDCMethodOfUse': {
       'Ingests': 'Ingest',
       'Injects': 'Inject',
       'Smokes': 'Smoke',
+    },
+    'Past4WkDailyLivingImpacted': {
+        'Once or twice a week' : 'Once or twice per week',
+        'Three or four times a week': 'Three or four times per week'
+    },
+    'DoYouFeelSafeWhereYouLive': {
+       'Often feel unsafe. Occasionally experience violence': 'Often feel unsafe / Occasionally experience violence',
+       'Never feel safe. Constantly exposed to violence': 'Never feel safe / Constantly exposed to violence'             
     }
 }
 
@@ -159,11 +112,11 @@ data_types = {
 'AssessmentDate': 'date',
 'SurveyName': 'string',
 
-
 'PDCSubstanceOrGambling': 'string',
 'PDCMethodOfUse': 'string',
 'PDCDaysInLast28': 'numeric',
 'PDCUnits': 'string',
+
 'PDCHowMuchPerOccasion': 'range', # can be 'Other'/NaN/float/int/range -> convert to float64, exclude Other
 
 'HaveYouEverInjected': 'string',
@@ -172,4 +125,79 @@ data_types = {
 'SDSHowMuchDoYouWorryAboutAODUse': 'numeric',
 'SDSDoYouWishToStop': 'numeric',
 'SDSHowDifficultToStopOrGoWithout': 'numeric',
+
+'Past4WkPhysicalHealth': 'numeric',
+'Past4WkMentalHealth': 'numeric',
+'Past4WkQualityOfLifeScore': 'numeric',
 }
+
+audience_grouping =  [
+    {  
+     'FunderName': 'Coordinaire',
+     'Groups': ['SENSW-Pathways', 'SENSW-Sapphire']
+    },
+    {  
+     'FunderName': 'NSW Ministry of Health',
+     'Groups': ['NSW Methamphetamine Support']
+    },
+    {
+      'FunderName': 'Murrumbidgee PHN',
+      'Groups': ['Murrumbidgee Pathways']
+    },
+    {
+      'FunderName': 'ACT Health',
+      'Groups': ['TSS', 'Arcadia']
+    }
+]
+
+program_grouping = {
+      'SENSW-Pathways':['EUROPATH','MONPATH','BEGAPATH','GOLBGNRL'],
+      'SENSW-Sapphire':['SAPPHIRE'],
+      'NSW Methamphetamine Support':['MURMICE', 'GOLBICE'],
+      'Murrumbidgee Pathways' : ['MURMWIO', 'MURMPP','MURMHEAD'],
+      'TSS': ['TSS'],
+      'Arcadia': ['ARCA']
+}
+
+results_grouping = {
+    "Wellbeing measures":{
+        'questions': ['Past4WkPhysicalHealth', 'Past4WkMentalHealth', 'Past4WkQualityOfLifeScore'],
+        'description':'Changes in average scores for "Past 4 weeks: Wellbeing measures"'
+    },
+    "Substance Use": {
+        'questions': ['PDCHowMuchPerOccasion' , 'PDCDaysInLast28'],
+        'description':'Changes in average scores for "Past 4 weeks: Substance use"'
+    },
+    "Problems in Life Domains": {
+        'questions': ['Past4WkDailyLivingImpacted'
+                     , 
+                    'Past4WkHowOftenPhysicalHealthCausedProblems'
+                    , 'Past4WkHowOftenMentalHealthCausedProblems'
+                    , 'Past4WkUseLedToProblemsWithFamilyFriend'
+                    , 'Past4WkDifficultyFindingHousing'
+                    ], #Past4WkHowOftenIllegalActivities
+        'description':'Changes in average scores for "Past 4 weeks: Use let to problems in various Life domains"'
+    },
+    "SDS & K10" : {
+        'questions': ['SDS_Score', 'K10_Score'],
+        'description':'Changes in average scores for "SDS & K10"'
+    }
+}
+
+
+# "Changes in average scores for "Past 4 weeks: Use let to problems in various Life domains" '
+# title = "Problems in Life Domains"
+# probs_life_domains_qs =  ['Past4WkDailyLivingImpacted'
+#                   , 
+#                   'Past4WkHowOftenPhysicalHealthCausedProblems'
+#                   , 'Past4WkHowOftenMentalHealthCausedProblems'
+#                   , 'Past4WkUseLedToProblemsWithFamilyFriend'
+#                   , 'Past4WkDifficultyFindingHousing'
+#                   ] #Past4WkHowOftenIllegalActivities
+
+# }
+
+# wellbeing_qs =  ['Past4WkPhysicalHealth', 'Past4WkMentalHealth', 'Past4WkQualityOfLifeScore']
+
+# title = "Substance Use"
+# substance_use_qs =  ['PDCHowMuchPerOccasion' , 'PDCDaysInLast28']

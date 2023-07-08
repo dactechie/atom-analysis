@@ -1,5 +1,6 @@
 # import pandas as pd
 # from utils.group_utils import getrecs_w_min_numvals_forcol, chrono_rank_within_clientgroup
+from utils.group_utils import getrecs_w_min_numvals_forcol, chrono_rank_within_clientgroup
 
 def get_mean_xcontribs_of_nth_assessment_for_question(df, nth, question):
   nth_surveys = df[df['survey_rank'] == nth]
@@ -19,9 +20,45 @@ def get_nmeans_ncontribs(chosen_surveys, df, field_name:str):
       average, n_contribs = get_mean_xcontribs_of_nth_assessment_for_question(df, s_no, field_name)
       averages.append(average)
       nth_assessment_contribs.append(n_contribs)
-      print(f"Survey {s_no} has {n_contribs} contributing asessments for {field_name}, with mean {average}")
+      # print(f"{field_name},{s_no},{n_contribs},{average}")
+
+      # print(f"Survey {s_no} has {n_contribs} contributing asessments for {field_name}, with mean {average}")
   return averages, nth_assessment_contribs
 
+# 
+def get_nmeans_for_question(question, df_q, chosen_surveys):
+  # the last survey rank is the number of surveys we are interested in
+  min_assessments = chosen_surveys[-1]
+ 
+  col_df1 = getrecs_w_min_numvals_forcol(df_q, question, min_num_vals=min_assessments)
+  col_df2 = chrono_rank_within_clientgroup(col_df1) 
+
+  print (f"NRecords For Col({question}): {len(col_df2)})#, Total:{len(df_q)}, {min(col_df2.AssessmentDate)}, {max(col_df2.AssessmentDate)}")
+
+  averages, nth_assessment_contribs = get_nmeans_ncontribs(chosen_surveys, col_df2, question)
+  return averages, nth_assessment_contribs
+
+# TODO: Clients with no change : treat as outliers and remove ? 
+# TODO: Clients with only zeros ?
+
+
+
+def get_nmeans_for_questions(question_list, processed_df, chosen_surveys):
+  
+  answer_list = []
+  
+  for question in question_list:
+    averages, nth_assessment_contribs = get_nmeans_for_question(question, processed_df, chosen_surveys)
+
+    for survey_number, average, contribs in zip(chosen_surveys, averages, nth_assessment_contribs) :
+      answer_list.append({
+        'Question': question,
+        "Assessment Number": survey_number,
+        'Average': average,
+        '# Contributions': contribs,
+      })
+      
+  return answer_list
 
 # redundant : we use   getrecs_w_min_numvals_forcol to get question-wise min-num surveys  
 # def get_df_forclients_with_atleast_n_surveys(df, min_surveys):

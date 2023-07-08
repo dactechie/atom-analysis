@@ -1,9 +1,18 @@
 import pandas as pd
-
 from pandas.api.types import CategoricalDtype
 
+''' 
+    - pandas.Categorical is used to create a variable that holds categorical data.
+
+    - pandas.api.types.CategoricalDtype is a type useful for specifying the categories and 
+    order when creating a pandas.Categorical variable, 
+    or when converting a pandas Series to categorical.
+'''
+
 from data_config import predef_categories,\
-    question_list_for_categories, data_types, option_variants, remove_if_under_threshold
+    question_list_for_categories, data_types, option_variants #, remove_if_under_threshold
+
+from utils.fromstr import range_average
 
 ###############################################
 
@@ -25,10 +34,11 @@ def define_all_categories(df:pd.DataFrame):
                         )
                         for field in question_list_for_categories]
   
-  df1 = df.copy()
-  # DoYOuFeelSafeWhereYOuLive
+  df1 = df.copy()  
   # Field elements must be 2- or 3-tuples, got ''Yes - Completely safe''
   for category_name, category_type in category_nametypes:
+    #if category_type is not None and category_type..check type:
+    # (isinstance(series.dtype, pd.api.types.CategoricalDtype):):
     df1[category_name] = df[category_name].astype(category_type)
   
   return df1
@@ -55,19 +65,19 @@ def fix_variants (df1):
       df.update(d1)
   return df
 
+
   # convert numeric types
 def fix_numerics(df1):
+
   df = df1.copy()
+  
   numeric_fields = [k for k, v in data_types.items() if v == 'numeric']  
-  # df[numeric_fields] = pd.to_numeric(df[numeric_fields], errors='coerce') # ignore ?  
-  #arg must be a list, tuple, 1-d array, or Series
   df[numeric_fields] = df[numeric_fields].apply(pd.to_numeric, errors='coerce') # ignore ?
+
+  range_fields = [k for k, v in data_types.items() if v == 'range']  
+  df[range_fields] = df[range_fields].applymap(range_average)
+
   return df
-
-
-# def process_range(df1):
-#   df = df1.copy()
-#   remove_if_under_threshold
 
 
 def convert_dtypes(df1):

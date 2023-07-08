@@ -1,14 +1,11 @@
 import numpy as np
 
+
 def chrono_rank_within_clientgroup(df1):#, col:str='AssessmentDate'):#, ascending=True):
   df = df1.copy()
   g = df.groupby('SLK')  
   df.loc[:,'survey_rank'] = g['AssessmentDate'].rank(method='min') 
   return df
-
-def range_average(range_str:str, separator:str):
-  two_ints = range_str.split(separator)
-  return (int(two_ints[0])+int(two_ints[1]))/2
 
 
 # group_utils.py

@@ -1,9 +1,32 @@
 
 import os
+from datetime import datetime
 import pandas as pd
 
 from azutil.helper import get_results
 
+
+def write_df_to_csv(df, file_path:str, filters:dict|None={}):
+  df['ResultsTimestamp'] = datetime.now().replace(microsecond=0)
+  
+  if not filters or not any(filters.values()):    
+    df.to_csv(file_path, index=False)
+    return
+  
+  # add filter columns to DataFrame
+  for filter_name, filter_values in filters.items():
+    # join the list of filter values into a single string with semicolon
+    filter_values_str = '; '.join(filter_values)
+    df[filter_name] = filter_values_str
+
+  df.to_csv(file_path, index=False)
+
+# def write_results_to_csv(results, file_path:str):
+#   with open(file_path, 'w', newline='') as csvfile:
+#     writer = csv.writer(csvfile)
+#     writer.writerow(results[0].keys())
+#     for row in results:
+#       writer.writerow(row.values())
 
 def read_parquet(file_path:str) -> pd.DataFrame|None:
   if os.path.exists(file_path):
