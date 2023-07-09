@@ -1,7 +1,8 @@
-# Population-level trends for Client Outcome Measures
+# atom-analysis: Population-level trends for Client Outcome Measures
 
 ## Changes in average (over clients) scores ATOM Assessment Survey questions.
 
+(see b.ipynb file)
 
 ## Steps:
 
