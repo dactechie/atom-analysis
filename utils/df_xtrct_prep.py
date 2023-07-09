@@ -27,15 +27,14 @@ def extract_prep_data(extract_start_date, extract_end_date
   if not(isinstance(processed_df, type(None)) or processed_df.empty):
     return processed_df
   
-  print("INFO: No processed data found, loading from DB")    
+  print("INFO: No processed data found, loading from raw data.")    
   raw_df = get_data(extract_start_date, extract_end_date, f"./data/in/{fname}.parquet", cache=True)
   
   if isinstance(raw_df, type(None)) or raw_df.empty:
     print("ERROR: No data found")
     exit(1)
   
-
-  # Step 2: Clean and Transform the dataset
+  # Clean and Transform the dataset
   processed_df = prep_dataframe(raw_df) # only one filter: PDCSubstanceOrGambling has to have a value
 
   processed_df = limit_clients_active_inperiod(processed_df, active_clients_start_date, active_clients_end_date)

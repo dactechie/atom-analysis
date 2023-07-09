@@ -1,6 +1,7 @@
 # import pandas as pd
 # from utils.group_utils import getrecs_w_min_numvals_forcol, chrono_rank_within_clientgroup
 from utils.group_utils import getrecs_w_min_numvals_forcol, chrono_rank_within_clientgroup
+from data_config import results_grouping
 
 def get_mean_xcontribs_of_nth_assessment_for_question(df, nth, question):
   nth_surveys = df[df['survey_rank'] == nth]
@@ -59,6 +60,23 @@ def get_nmeans_for_questions(question_list, processed_df, chosen_surveys):
       })
       
   return answer_list
+
+import pandas as pd
+def get_all_results(df, chosen_surveys, filters:dict = {}):
+  all_results = []
+  for title, val in results_grouping.items():
+    questions = val['questions']
+    print(title)
+    answer_list = get_nmeans_for_questions(questions, df, chosen_surveys)    
+    answers_df = pd.DataFrame(answer_list)
+    
+    # useful to have an advanced graphing function to plot all 4 charts in one go
+    all_results.append({
+      'data': answers_df,
+      'title': title,
+      'filters': filters,
+    })
+  return all_results
 
 # redundant : we use   getrecs_w_min_numvals_forcol to get question-wise min-num surveys  
 # def get_df_forclients_with_atleast_n_surveys(df, min_surveys):

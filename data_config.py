@@ -131,33 +131,7 @@ data_types = {
 'Past4WkQualityOfLifeScore': 'numeric',
 }
 
-audience_grouping =  [
-    {  
-     'FunderName': 'Coordinaire',
-     'Groups': ['SENSW-Pathways', 'SENSW-Sapphire']
-    },
-    {  
-     'FunderName': 'NSW Ministry of Health',
-     'Groups': ['NSW Methamphetamine Support']
-    },
-    {
-      'FunderName': 'Murrumbidgee PHN',
-      'Groups': ['Murrumbidgee Pathways']
-    },
-    {
-      'FunderName': 'ACT Health',
-      'Groups': ['TSS', 'Arcadia']
-    }
-]
-
-program_grouping = {
-      'SENSW-Pathways':['EUROPATH','MONPATH','BEGAPATH','GOLBGNRL'],
-      'SENSW-Sapphire':['SAPPHIRE'],
-      'NSW Methamphetamine Support':['MURMICE', 'GOLBICE'],
-      'Murrumbidgee Pathways' : ['MURMWIO', 'MURMPP','MURMHEAD'],
-      'TSS': ['TSS'],
-      'Arcadia': ['ARCA']
-}
+# -------------------------- Results Grouping -------------------------
 
 results_grouping = {
     "Wellbeing measures":{
@@ -178,26 +152,27 @@ results_grouping = {
                     ], #Past4WkHowOftenIllegalActivities
         'description':'Changes in average scores for "Past 4 weeks: Use let to problems in various Life domains"'
     },
-    "SDS & K10" : {
+    "SDS and K10" : {
         'questions': ['SDS_Score', 'K10_Score'],
         'description':'Changes in average scores for "SDS & K10"'
     }
 }
 
 
-# "Changes in average scores for "Past 4 weeks: Use let to problems in various Life domains" '
-# title = "Problems in Life Domains"
-# probs_life_domains_qs =  ['Past4WkDailyLivingImpacted'
-#                   , 
-#                   'Past4WkHowOftenPhysicalHealthCausedProblems'
-#                   , 'Past4WkHowOftenMentalHealthCausedProblems'
-#                   , 'Past4WkUseLedToProblemsWithFamilyFriend'
-#                   , 'Past4WkDifficultyFindingHousing'
-#                   ] #Past4WkHowOftenIllegalActivities
+# --------------- Filters -----------------------------------
 
-# }
+funder_program_grouping ={
+    'Coordinaire' : ['SENSW-Pathways', 'SENSW-Sapphire'],
+    'NSW Ministry of Health' : ['NSW Methamphetamine Support'],
+    'Murrumbidgee PHN' : ['Murrumbidgee Pathways'],
+    'ACT Health' : ['TSS', 'Arcadia']    
+}
 
-# wellbeing_qs =  ['Past4WkPhysicalHealth', 'Past4WkMentalHealth', 'Past4WkQualityOfLifeScore']
-
-# title = "Substance Use"
-# substance_use_qs =  ['PDCHowMuchPerOccasion' , 'PDCDaysInLast28']
+program_grouping = {
+      'SENSW-Pathways':['EUROPATH','MONPATH','BEGAPATH','GOLBGNRL'],
+      'SENSW-Sapphire':['SAPPHIRE'],
+      'NSW Methamphetamine Support':['MURMICE', 'GOLBICE'],
+      'Murrumbidgee Pathways' : ['MURMWIO', 'MURMPP','MURMHEAD'],
+      'TSS': ['TSS'],
+      'Arcadia': ['ARCA']
+}
