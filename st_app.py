@@ -5,7 +5,8 @@ st.set_page_config(page_title="ATOM Dashboard",
                    page_icon=":bar_chart:",
                    layout="wide")
 
-df = pd.read_parquet("./data/out/processed.parquet")
+fname = "./tmp/processed_all_cols_20200101_20240101_1.parquet"
+df = pd.read_parquet(fname)
 
 
 
