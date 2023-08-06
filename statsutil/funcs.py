@@ -1,7 +1,10 @@
 # import pandas as pd
 # from utils.group_utils import getrecs_w_min_numvals_forcol, chrono_rank_within_clientgroup
+import mylogger
 from utils.group_utils import getrecs_w_min_numvals_forcol, chrono_rank_within_clientgroup
 from data_config import results_grouping
+
+logger = mylogger.get(__name__)
 
 def get_mean_xcontribs_of_nth_assessment_for_question(df, nth, question):
   nth_surveys = df[df['survey_rank'] == nth]
@@ -34,7 +37,7 @@ def get_nmeans_for_question(question, df_q, chosen_surveys):
   col_df1 = getrecs_w_min_numvals_forcol(df_q, question, min_num_vals=min_assessments)
   col_df2 = chrono_rank_within_clientgroup(col_df1) 
 
-  print (f"NRecords For Col({question}): {len(col_df2)})#, Total:{len(df_q)}, {min(col_df2.AssessmentDate)}, {max(col_df2.AssessmentDate)}")
+  logger.info (f"NRecords For Col({question}): {len(col_df2)})#, Total:{len(df_q)}, {min(col_df2.AssessmentDate)}, {max(col_df2.AssessmentDate)}")
 
   averages, nth_assessment_contribs = get_nmeans_ncontribs(chosen_surveys, col_df2, question)
   return averages, nth_assessment_contribs
@@ -66,7 +69,7 @@ def get_all_results(df, chosen_surveys, filters:dict = {}):
   all_results = []
   for title, val in results_grouping.items():
     questions = val['questions']
-    print(title)
+    logger.info(f"Title: {title}")
     answer_list = get_nmeans_for_questions(questions, df, chosen_surveys)    
     answers_df = pd.DataFrame(answer_list)
     

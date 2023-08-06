@@ -2,10 +2,16 @@
 import os
 from datetime import datetime
 import pandas as pd
-
+import mylogger
 from azutil.helper import get_results
 # from filters import get_outfilename_for_filters
 
+logger = mylogger.get(__name__)
+
+def create_results_folder(results_folder:str):
+  # create results folder if it doesn't exist
+  if not os.path.exists(results_folder):
+    os.makedirs(results_folder)
 
 def write_df_to_csv(df, file_path:str, filters:dict|None={}):
   df['ResultsTimestamp'] = datetime.now().replace(microsecond=0)
@@ -87,15 +93,15 @@ def get_data(start_date, end_date, download_filepath:str, cache=False) -> pd.Dat
   #
   if cache:
     if os.path.exists(f"{download_filepath}"):
-      print("INFO: Using cached data")
+      logger.info(f"Using cached data from {download_filepath}")
       df = read_parquet(f"{download_filepath}")
       return df
     else:
-      print("INFO: No cached data found, loading from DB")
+      logger.info("No cached data found, loading from DB")
 
   results = get_results(start_date, end_date)
   if not results:
-    print("ERROR : Zero results")
+    logger.error("Zero results returned from get_results (backend)")
     return None
   
   df = pd.DataFrame.from_records(results)

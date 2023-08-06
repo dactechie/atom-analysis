@@ -1,12 +1,14 @@
 
 import json
 import pandas as pd
-
+import mylogger
 from data_config import keep_parent_fields
 from utils.dtypes import convert_dtypes
 from utils.df_ops_base import concat_drop_parent, \
                             drop_notes_by_regex \
                       , normalize_first_element,  drop_fields
+
+logger = mylogger.get(__name__)
 
 """
   limit the dataset to only those clients who have done at least min_num_assessments
@@ -15,20 +17,30 @@ def limit_min_num_assessments(df, min_num_assessments):
 
     g = df.groupby('SLK')
     counts =  g['SLK'].count()
+    logger.debug(f"limit_min_num_assessments: counts: {counts}")
     gt2_ATOM_SLKs = counts[ counts >= min_num_assessments ].index.tolist()
     df_gt2 = df [ df['SLK'].isin(gt2_ATOM_SLKs) ]
-
+    logger.debug(f"limit_min_num_assessments: {len(df_gt2)} clients with at least {min_num_assessments} assessments")
     return df_gt2
 
 
 def limit_clients_active_inperiod(df, start_date, end_date):
   # clients_inperiod = df[ (df.AssessmentDate >=  '2022-07-01') & (df.AssessmentDate <= '2023-06-30')].SLK.unique()
+  logger.debug(f"Total clients {len(df)}")
+  
   clients_inperiod = df[ (df.AssessmentDate >=  start_date) & (df.AssessmentDate <= end_date)].SLK.unique()
   df_active_clients = df [ df['SLK'].isin(clients_inperiod) ]
+  
+  logger.debug(f"Clients in period {len(df_active_clients)}")
+
   return df_active_clients
+
 
 def get_surveydata_expanded(df:pd.DataFrame) -> pd.DataFrame:
   # https://dschoenleber.github.io/pandas-json-performance/
+  
+  logger.debug("\t get_surveydata_expanded")
+
   df_surveydata = df['SurveyData'].apply(json.loads)
   df_surveydata_expanded:pd.DataFrame =  pd.json_normalize(df_surveydata.tolist(), max_level=1)
   
@@ -39,7 +51,9 @@ def get_surveydata_expanded(df:pd.DataFrame) -> pd.DataFrame:
 
 def prep_dataframe(df:pd.DataFrame):
    # because Program is in SurveyData
- 
+  
+  logger.debug(f"prep_dataframe of length {len(df)} : ")
+
   df2 = get_surveydata_expanded(df.copy())
   df3 = drop_fields(df2,['ODC'])
  
@@ -60,9 +74,10 @@ def prep_dataframe(df:pd.DataFrame):
 
   df8.drop(columns=['SLK'], inplace=True)
   df8.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
+  
   df9 = df8.sort_values(by="AssessmentDate")
   
-  
+  logger.debug(f"Done Prepping df")
   return df9
 
 
