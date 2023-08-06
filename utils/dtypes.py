@@ -1,19 +1,23 @@
-import pandas as pd
-from pandas.api.types import CategoricalDtype
 
 ''' 
-    - pandas.Categorical is used to create a variable that holds categorical data.
-
-    - pandas.api.types.CategoricalDtype is a type useful for specifying the categories and 
-    order when creating a pandas.Categorical variable, 
-    or when converting a pandas Series to categorical.
+  The Survey JSON has various types of data : text/string, dates, numeric, number-ranges.
+  The data types are defined in data_config.py and this module uses that information to 
+  convert the data to the correct type.
+  
 '''
-
+import pandas as pd
+from pandas.api.types import CategoricalDtype
 from data_config import predef_categories,\
     question_list_for_categories, data_types, option_variants #, remove_if_under_threshold
 
 from utils.fromstr import range_average
 
+
+    # - pandas.Categorical is used to create a variable that holds categorical data.
+
+    # - pandas.api.types.CategoricalDtype is a type useful for specifying the categories and 
+    # order when creating a pandas.Categorical variable, 
+    # or when converting a pandas Series to categorical.
 ###############################################
 
 def define_category_with_uniqs(df:pd.DataFrame, question:str) -> CategoricalDtype:  
@@ -83,7 +87,7 @@ def fix_numerics(df1):
 def convert_dtypes(df1):
   df = df1.copy()
   
-  convert_to_datetime(df,'AssessmentDate')
+  convert_to_datetime(df,'AssessmentDate') # TODO : DOB
   
   df1 = fix_variants(df) # Smokes -> Smoke
   df2 = fix_numerics(df1)
@@ -91,39 +95,3 @@ def convert_dtypes(df1):
 
   return df3
   
-
-
-
-  # PDCMethodOfUse : Categorical
-  # array([nan, 'Ingest', 'Inject', 'Smoke', 'Inhale (vapour)',
-  #      'Sniff (powder)', 'Smokes', 'Ingests',
-  #      'Not stated/inadequately described', 'Sublingual', 'Other',
-  #      'Injects', 'Transdermal'], dtype=object)
-
-  # TODO: Incldude in ATOM filters
-  # WARNING : keep one of the duplicates (TODO)
-  # checks if enough days have passed between each of the ADOM Collection-dates for a client.
-# def remove_duplicates_foreach_client(adom):
-#   # get a true/ false result for each Client ID
-#   res = adom.groupby('PartitionKey').apply(lambda grp: has_no_duplicates(grp['AssessmentDate'].diff()))
-#   # filter on 'true' i.e. no duplicates
-#   return adom[ adom['PartitionKey'].isin(res[res.values].index) ]
-
-# # checks if none the time-deltas(in days) in a set of passed-in values, were within 21 days 
-# def has_no_duplicates(adiff):
-#   return not any(d.days < 21 for d in adiff)  
-
-
-# def convert_dtypes(adom):
-#   adom['AssessmentDate'] = pd.to_datetime(adom['AssessmentDate'],format='%d/%m/%Y',dayfirst=True)
-#   adom = adom.fillna(0)
-
-#   adom = adom.astype(int,errors='ignore')
-#   how_many_cols = adom.filter(regex = 'ow many').columns  # numeric columns
-#   print(how_many_cols)
-#   for a in how_many_cols:
-#     adom[a] = pd.to_numeric(pd.Series(adom[str(a)]), errors='ignore')  
-#     if str(adom[a].dtype) == "float64" or adom[a].dtype == 'O':
-#       #print (f" a :{a}")
-#       adom[a] = adom[a].astype(int,errors='ignore')
-
