@@ -1,3 +1,9 @@
+
+## Local Dev
+ start storage emulator : 
+ > azurite
+ 
+
 # atom-analysis: Population-level trends for Client Outcome Measures
 
 ## Changes in average (over clients) scores ATOM Assessment Survey questions.
