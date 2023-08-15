@@ -104,7 +104,7 @@ option_variants = {
     }
 }
 
-data_types = {
+data_types:dict = {
   'PartitionKey': 'string',
 'RowKey': 'string',
 'Program': 'string',
@@ -195,4 +195,45 @@ EstablishmentID_Program = {
     ,'12KK03024': 'MURMPP'
     ,'12KK03025': 'MURMWIO'
     ,'12KK03023': 'MURMHEAD'
+}
+
+
+# ---- for NADA Drug mapping pivot
+
+
+PDC_ODC_fields = {
+    'ODC': {
+      'FIELD' : 'OtherSubstancesConcernGambling',
+      'NDAYS_FIELD' : 'DaysInLast28'  
+    },
+    'PDC':{
+      'FIELD' : 'PDCSubstanceOrGambling',
+      'NDAYS_FIELD' : 'PDCDaysInLast28'
+    }
+}
+
+# TODO: use NADA fields
+# DU Heroin use number of days
+# DU Other opioid use number of days
+# DU Cannabis use number of days
+# DU Cocaine use number of days
+# DU Amphetamine use number of days
+# DU Tranquilliser use number of days
+# DU Another drug use number of days
+# DU Alcohol use number of days
+
+
+# Define the categories and their corresponding names in the data
+drug_categories = {
+    'Alcohol': ['Ethanol'],
+    'Heroin': ['Heroin'],
+    'Other Opioids': ['Oxycodone','Pharmaceutical Opioids','Pharmaceutical Opioids, n.f.d.', 'Methadone', 'Opioid Antagonists, nec'],
+    # Fentanyl, Tramadol, COdeine, Morphine
+
+    'Cocaine': ['Cocaine'],
+    'Cannabis': ['Cannabinoids and Related Drugs, n.f.d.', 'Cannabinoids'],
+    'Amphetamines': ['Amphetamines, n.f.d.', 'Amphetamines, n.f.d', 'Methamphetamine'],
+    'Tranquilliser': ['Benzodiazepines, nec', 'Benzodiazepines, n.f.d', 'Benzodiazepines, n.f.d.',  'Diazepam'],
+
+    'Another Drug':  ['Other', 'Psychostimulants, n.f.d.','Zolpidem', 'Caffeine',  'MDMA/Ecstasy',  ],
 }
