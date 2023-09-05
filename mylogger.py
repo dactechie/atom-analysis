@@ -1,9 +1,18 @@
 import os
 import logging
 
-logging.getLogger().setLevel(logging.DEBUG)
+
+
+def init_logger(env:str='local'):
+  if env == 'local':
+    logging.getLogger().setLevel(logging.DEBUG)
+  else:
+    logging.getLogger().setLevel(logging.INFO)
+  
+  
 
 def get(module_name:str) -> logging.Logger:
+    
     logger = logging.getLogger(module_name)
     # logger.setLevel(logging.INFO)
     

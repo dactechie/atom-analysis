@@ -14,23 +14,24 @@ USAGE:
 import os
 # import copy
 # import random
-import json
-from dotenv import find_dotenv, load_dotenv
+# import json
+# from dotenv import find_dotenv, load_dotenv
+from utils.environment import EnvironmentConfig
 from azure.data.tables import TableEntity
 
+import mylogger
+logger = mylogger.get(__name__)
 
 class SampleTablesQuery(object):
+
     def __init__(self):
-        load_dotenv(find_dotenv())
-        self.access_key = os.getenv("TABLES_PRIMARY_STORAGE_ACCOUNT_KEY")
-        self.endpoint_suffix = os.getenv("TABLES_STORAGE_ENDPOINT_SUFFIX")
-        self.account_name = os.getenv("TABLES_STORAGE_ACCOUNT_NAME")
-        self.endpoint = "{}.table.{}".format(self.account_name, self.endpoint_suffix)
-        self.connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING","HELPPPPPP")
-        # self.connection_string = "DefaultEndpointsProtocol=https;AccountName={};AccountKey={};EndpointSuffix={}".format(
-        #     self.account_name, self.access_key, self.endpoint_suffix
-        # )
-        self.table_name = "ATOM"
+      config = EnvironmentConfig()
+  
+      self.connection_string = config.connection_string
+
+      self.table_name = "ATOM"
+      logger.info(f"SampleTablesQuery initialised with connection_string: {self.connection_string}")
+
         
     def query_atoms(self, select_fields:list[str], filter_template:str, query_params:dict):
         from azure.data.tables import TableClient

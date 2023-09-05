@@ -2,7 +2,10 @@
 ## Local Dev
  start storage emulator : 
  > azurite
- 
+ > azurite --silent --location ~/dev/atom-analysis --tableHost 127.0.0.1 --tablePort 10002
+
+C:\Users\aftab.jalal\dev\AzuriteData
+
 
 # atom-analysis: Population-level trends for Client Outcome Measures
 
