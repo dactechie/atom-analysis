@@ -2,7 +2,7 @@ import sys
 import fire
 import pandas as pd
 import mylogger
-from utils.environment import EnvironmentConfig
+from utils.environment import MyEnvironmentConfig
 from azutil.helper import get_results
 # from azutil.az_tables_query import SampleTablesQuery
 
@@ -14,7 +14,8 @@ class FireApp:
         
         mylogger.init_logger(env)
         self.logger = mylogger.get(__name__)
-        EnvironmentConfig().setup(env)
+        
+        MyEnvironmentConfig().setup(env)
         self.env = env
         # s = SampleTablesQuery()
 
@@ -30,6 +31,7 @@ class FireApp:
             self.logger.info("Running in Production environment.")
             # Your production environment logic here
 
+    # get data from SQL Server ATOMSurveys, 
     def get_table_data(self, start_date:str, end_date:str, table_name:str="ATOM"):
         """
           start_date = 20230701
@@ -62,10 +64,3 @@ if __name__ == '__main__':
 
     app = FireApp(env)
     fire.Fire(app)
-
-# def main(env='local'):
-#     app = FireApp(env)
-#     fire.Fire(app)
-
-# if __name__ == '__main__':
-#     fire.Fire(main)

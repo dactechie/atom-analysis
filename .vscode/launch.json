@@ -1,0 +1,18 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "C:\\Users\\aftab.jalal\\dev\\atom-analysis\\MainApp.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      // "args": ["env","local"]
+      "args": ["--env", "local", "get_table_data", "--start_date", "20230701", "--end_date" , "20230731"]
+    }
+  ]
+}
