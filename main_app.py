@@ -1,10 +1,15 @@
 # as oppose to b.ipynb
-
+"""
+  Generates the stats summary tables for 
+  ATOMAnnualReport.pbix :
+  C:\\Users\aftab.jalal\\Directions Health\\Directions Health Intranet - Reporting\\ATOM
+"""
 import mylogger
-from utils.df_xtrct_prep import extract_prep_data
+from utils.df_xtrct_prep import extract_prep_atom_data
 from statsutil.funcs import get_all_results
 from utils.io import write_results_to_files, create_results_folder
 from filters import get_filters, apply_filters, get_outfilename_for_filters
+
 logger = mylogger.get(__name__)
 
 
@@ -34,14 +39,16 @@ def main ():
   period_folder = f"{extract_start_date}_{extract_end_date}_1"
 
   outfolder = f"{results_folder}/{period_folder}"
-
+  
   active_clients_start_date ='2022-07-01' 
   active_clients_end_date = '2023-06-30'
-
+  
+  logger.info(f"Running main_app.py with chosen_surveys: {chosen_surveys} and outfolder:{outfolder}")
   logger.info(f"Extracting data from {extract_start_date} to {extract_end_date}")
+  logger.info(f"For clients with ATOM(s) active in period {active_clients_start_date} to {active_clients_end_date}")
 
   # Extract & Process
-  processed_df = extract_prep_data(extract_start_date, extract_end_date
+  processed_df = extract_prep_atom_data(extract_start_date, extract_end_date
                                   , active_clients_start_date
                                   , active_clients_end_date
                                   , period_folder, min_atoms_per_client =3)
@@ -59,6 +66,8 @@ def main ():
 
   # orig_filter1 = {'FunderName': 'ACT Health'}
   # ACTHealth_results = do_all(processed_df, chosen_surveys, orig_filter1)
+
+  logger.info(f"\n\n\t----------Finished running main_app.py--------------\n\n")
 
 
 if __name__ == '__main__':
