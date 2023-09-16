@@ -10,39 +10,31 @@ USAGE:
     Set the environment variables with your own values before running the sample:
     1) AZURE_STORAGE_CONNECTION_STRING - the connection string to your storage account
 """
-
-import os
-# import copy
-# import random
-# import json
-# from dotenv import find_dotenv, load_dotenv
-from utils.environment import EnvironmentConfig
-from azure.data.tables import TableEntity
-
+from azure.data.tables import TableClient
+from azure.core.exceptions import HttpResponseError
+from utils.environment import MyEnvironmentConfig
 import mylogger
+
 logger = mylogger.get(__name__)
 
 class SampleTablesQuery(object):
 
     def __init__(self):
-      config = EnvironmentConfig()
-  
+      config = MyEnvironmentConfig()
+    
       self.connection_string = config.connection_string
 
-      self.table_name = "ATOM"
+      self.table_name = config.survey_table_name
       logger.info(f"SampleTablesQuery initialised with connection_string: {self.connection_string}")
 
         
-    def query_atoms(self, select_fields:list[str], filter_template:str, query_params:dict):
-        from azure.data.tables import TableClient
-        from azure.core.exceptions import HttpResponseError
-    
-        # print("Entities with 25 < Value < 50")
-        # [START query_entities]
+    def query_atoms(self, select_fields:list[str], filter_template:str, query_params:dict):    
+        """
+          parameters = {u"lower": 20211201, u"upper": 20220110}
+          name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper"
+        """
         with TableClient.from_connection_string(self.connection_string, self.table_name) as table_client:
             try:
-                # parameters = {u"lower": 20211201, u"upper": 20220110}
-                # name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper"
                 queried_entities = table_client.query_entities(
                     query_filter=filter_template, select=select_fields, parameters=query_params
                 )
@@ -53,17 +45,7 @@ class SampleTablesQuery(object):
             except HttpResponseError as e:
                 print(e.message)
       
-def get_json_result(atom:TableEntity):
-      #survey_data:dict = json.loads(atom.get("SurveyData",{}))
-      result  = {
-          "PartitionKey": atom.get("PartitionKey"),
-          "RowKey" : atom.get("RowKey"),
-          "Program": atom.get("Program"),
-          "SurveyName": atom.get("SurveyName"),
-          "SurveyData": atom.get("SurveyData",{})
-          #"SurveyData": survey_data
-      }
-      return result
+
 
 # def build_query_components(filter):
 #   name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper"
