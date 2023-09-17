@@ -3,8 +3,8 @@
 #if TYPE_CHECKING:
 # import os
 import mylogger
-from utils.io import get_data, read_parquet
-from data_prep import prep_dataframe, limit_min_num_assessments, limit_clients_active_inperiod
+from utils.io import get_data, read_parquet, write_parquet
+from data_prep import prep_dataframe, limit_min_num_assessments, limit_clients_active_inperiod, prep_dataframe_episodes
 
 logger = mylogger.get(__name__)
 
@@ -28,7 +28,7 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
     return processed_df
   
   logger.info("No processed data found, loading from raw data.")    
-  raw_df = get_data(extract_start_date, extract_end_date, f"./data/in/{fname}.parquet", cache=True)
+  raw_df = get_data('ATOM',extract_start_date, extract_end_date, f"./data/in/{fname}.parquet", cache=True)
   
   if isinstance(raw_df, type(None)) or raw_df.empty:
     logger.error("No data found. Exiting.")
@@ -43,10 +43,33 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
     processed_df = limit_min_num_assessments(processed_df, min_atoms_per_client)
   
   # cache the processed data
-  processed_df.to_parquet(f"{processed_filepath}")
+  # processed_df.to_parquet(f"{processed_filepath}")
+  write_parquet(processed_df, processed_filepath) # don't force overwrite
   logger.info(f"Done saving processed data to {processed_filepath}")
   
   return processed_df
+
+
+def extract_prep_episode_data(extract_start_date, extract_end_date
+                      # , active_clients_start_date
+                      # , active_clients_end_date
+                      , fname):
+  processed_filepath = f"./data/processed/{fname}.parquet"
+  raw_df = get_data('MDS',extract_start_date, extract_end_date, f"./data/in/{fname}.parquet", cache=True)
+  
+  if isinstance(raw_df, type(None)) or raw_df.empty:
+    logger.error("No data found. Exiting.")
+    exit(1)
+  processed_df = prep_dataframe_episodes(raw_df)
+  
+  # cache the processed data
+  write_parquet(processed_df, processed_filepath) # don't force overwrite
+  logger.info(f"Done saving processed data to {processed_filepath}")  
+
+  return processed_df
+
+     
+
 
 
 import os
@@ -54,6 +77,35 @@ import pandas as pd
 
 # List of column names in the CSV
 column_names = ['ESTABLISHMENT IDENTIFIER', 'GEOGRAPHICAL LOCATION', 'PMSEpisodeID', 'PMSPersonID', 'DOB', 'DOB STATUS', 'SEX', 'COUNTRY OF BIRTH', 'INDIGENOUS STATUS', 'PREFERRED LANGUAGE', 'SOURCE OF INCOME', 'LIVING ARRANGEMENT', 'USUAL ACCOMMODATION', 'CLIENT TYPE', 'PRINCIPAL DRUG OF CONCERN', 'PDCSubstanceOfConcern', 'ILLICIT USE', 'METHOD OF USE PRINCIPAL DRUG', 'INJECTING DRUG USE', 'SETTING', 'CommencementDate', 'POSTCODE', 'SOURCE OF REFERRAL', 'MAIN SERVICE', 'EndDate', 'END REASON', 'REFERRAL TO ANOTHER SERVICE', 'FAMILY NAME', 'GIVEN NAME', 'MIDDLE NAME', 'TITLE', 'SLK', 'MEDICARE NUMBER', 'PROPERTY NAME', 'UNIT FLAT NUMBER', 'STREET NUMBER', 'STREET NAME', 'SUBURB']
+# >DATS_NSW All MonthlyForAutomation
+# ESTABLISHMENT_IDENTIFIER
+#            , GEOGRAPHICAL_LOCATION
+#            , EPISODE_ID
+#            , PERSON_ID
+#            , DOB
+#            , DOB_STATUS
+#            , SEX
+#            , COUNTRY_OF_BIRTH
+#            , INDIGENOUS_STATUS
+#            , PREFERRED_LANGUAGE
+#            , SOURCE_OF_INCOME
+#            , LIVING_ARRANGEMENT
+#            , USUAL_ACCOMMODATION
+#            , CLIENT_TYPE
+#            , PRINCIPAL_DRUG_OF_CONCERN
+#            , SPECIFY_DRUG_OF_CONCERN
+#            , ILLICIT_USE
+#            , METHOD_OF_USE_PRINCIPAL_DRUG
+#            , INJECTING_DRUG_USE
+#            , SETTING
+#            , START_DATE
+#            , POSTCODE
+#            , SOURCE_OF_REFERRAL
+#            , MAIN_SERVICE
+#            , END_DATE
+#            , END_REASON
+#            , REFERRAL_TO_ANOTHER_SERVICE
+#            , SLK
 
 # List of columns we care about
 columns_of_interest = ['ESTABLISHMENT IDENTIFIER', 'GEOGRAPHICAL LOCATION', 'PMSEpisodeID', 'PMSPersonID', 'PDCSubstanceOfConcern', 'CommencementDate', 'EndDate', 'SLK']

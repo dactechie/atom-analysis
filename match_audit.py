@@ -1,18 +1,14 @@
 
 import pandas as pd
 import mylogger
-from utils.df_xtrct_prep import load_and_parse_episode_csvs, extract_prep_atom_data
-from data_config import EstablishmentID_Program
+from utils.df_xtrct_prep import extract_prep_atom_data, extract_prep_episode_data
+
 from utils.environment import MyEnvironmentConfig
 
 logger = mylogger.get(__name__)
 
-# EP CSV should be taken from here :
-# C:\Users\aftab.jalal\Directions Health\Directions Health Intranet - Reporting\NADASurveyGenerator\2023_csv\2023_csv
+
 def match_assessments(episodes_df, atoms_df):
-    # Apply the mapping to the ESTABLISHMENT IDENTIFIER and PDCSubstanceOfConcern columns in episodes_df
-    # episodes_df['ESTABLISHMENT IDENTIFIER'] = episodes_df['ESTABLISHMENT IDENTIFIER'].map(establishment_program_mapping)
-    # episodes_df['PDCSubstanceOfConcern'] = episodes_df['PDCSubstanceOfConcern'].map(pdc_substance_mapping)
 
     # Merge the dataframes on SLK and Program
     merged_df = pd.merge(episodes_df, atoms_df, how='inner', left_on=['SLK', 'Program'], right_on=['SLK', 'Program'])
@@ -46,14 +42,13 @@ def process_mismatched(matched_atoms: pd.DataFrame, atoms_df:pd.DataFrame):
   return cleaned_df
 
 
-def get_eps_unmatched_atoms(atoms:pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame | None]:
-    ep_df = load_and_parse_episode_csvs("./data/in/NSW_CSV/")
-    ep_df['Program'] = ep_df['ESTABLISHMENT IDENTIFIER'].map(EstablishmentID_Program)  
-    # ep_df.drop('ESTABLISHMENT IDENTIFIER',  axis=1, inplace=True)
 
-    ep_df['PDC'] = ep_df['PDCSubstanceOfConcern']
-    ep_df= ep_df[['SLK', 'Program',  'CommencementDate', 'EndDate', 'PDC']]
-    atoms['PDC'] = atoms['PDCSubstanceOrGambling']
+def get_eps_unmatched_atoms(#atoms:pd.DataFrame
+                      atoms:pd.DataFrame, ep_df:pd.DataFrame
+                            ) -> tuple[pd.DataFrame, pd.DataFrame | None]:
+    # ep_df = load_and_parse_episode_csvs("./data/in/NSW_CSV/")
+    # ep_df['Program'] = ep_df['ESTABLISHMENT IDENTIFIER'].map(EstablishmentID_Program)  
+ 
     atoms= atoms[['SLK', 'Program', 'Staff', 'AssessmentDate', 'PDC']]
 
     matched = match_assessments(ep_df, atoms)
@@ -70,18 +65,24 @@ def get_eps_unmatched_atoms(atoms:pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
 
 
 def download_attempt_match():  
-  extract_start_date = 20220701
-  extract_end_date = 20230630
+  extract_start_date = 20230501 #20220701
+  extract_end_date = 20230930
 
   fname = f"{extract_start_date}_{extract_end_date}" 
 
   active_clients_start_date ='2020-01-01' 
   active_clients_end_date = '2023-09-15'  
-  processed_df = extract_prep_atom_data(extract_start_date, extract_end_date
+  processed_atom_df = extract_prep_atom_data(extract_start_date, extract_end_date
                               , active_clients_start_date
                               , active_clients_end_date
                               , fname)
-  ep_df, unmatched_atoms_df = get_eps_unmatched_atoms(processed_df)
+  processed_ep_df = extract_prep_episode_data(extract_start_date, extract_end_date
+                              # , active_clients_start_date
+                              # , active_clients_end_date
+                              , f"eps_{fname}")  
+  
+  # processed_ep_df = load_and_parse_episode_csvs("./data/in/NSW_CSV/")  
+  ep_df, unmatched_atoms_df = get_eps_unmatched_atoms(processed_atom_df, processed_ep_df)
 
   return ep_df, unmatched_atoms_df
 
@@ -92,10 +93,13 @@ def program_mismatch(ep_df:pd.DataFrame, unmatched_atoms_df:pd.DataFrame) -> pd.
  merged_df = pd.merge(unmatched_w_slk_match, ep_df, on='SLK', suffixes=('_atom', '_ep'))
  # Find rows where 'Program' values don't match
  mismatch_df = merged_df[merged_df['Program_atom'] != merged_df['Program_ep']]
- program_mismatch_for_matched_slk = mismatch_df[['SLK','Program_atom',	 'Program_ep','Staff',	'AssessmentDate','CommencementDate', 'EndDate']].drop_duplicates()
+ program_mismatch_for_matched_slk = mismatch_df[['SLK','Program_atom', 'Program_ep','Staff',	'AssessmentDate','CommencementDate', 'EndDate']].drop_duplicates()
  return program_mismatch_for_matched_slk
  
  
+"""
+Writes the output to csv files
+"""
 def mismatch_analysis(ep_df, unmatched_atoms_df):
   # ep_df, unmatched_atoms_df = download_attempt_match()
   #SLK in atom but not in Episodes
@@ -113,11 +117,33 @@ def mismatch_analysis(ep_df, unmatched_atoms_df):
 
 def main(env='local'):
    MyEnvironmentConfig().setup(env)
+   
    ep_df, unmatched_atoms_df = download_attempt_match()
    noep_for_slk, prog_mismatch_for_slk = mismatch_analysis(ep_df, unmatched_atoms_df)
    return ep_df, unmatched_atoms_df,  noep_for_slk, prog_mismatch_for_slk 
 
+
+
+
+# def main2(env='local'):
+#   MyEnvironmentConfig().setup(env)
+#   extract_start_date = 20230501 #20220701
+#   extract_end_date = 20230930
+
+#   fname = f"{extract_start_date}_{extract_end_date}" 
+
+#   active_clients_start_date ='2020-01-01' 
+#   active_clients_end_date = '2023-09-15'   
+#   processed_ep_df = extract_prep_episode_data(extract_start_date, extract_end_date
+#                               , active_clients_start_date
+#                               , active_clients_end_date
+#                               , fname)  
+
+
+#   return processed_ep_df
+
 if __name__ == "__main__":
-  ep_df, unmatched_atoms_df, noep_for_slk, prog_mismatch_for_slk = main('prod')
+  #  ep_df = main2() #'prod')
+  ep_df, unmatched_atoms_df, noep_for_slk, prog_mismatch_for_slk = main()#'prod')
   print(ep_df)
   print(unmatched_atoms_df)  

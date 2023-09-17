@@ -1,5 +1,6 @@
 
 import json
+from typing import Literal
 import pandas as pd
 import mylogger
 from data_config import keep_parent_fields
@@ -7,6 +8,7 @@ from utils.dtypes import convert_dtypes
 from utils.df_ops_base import concat_drop_parent, \
                             drop_notes_by_regex \
                       , normalize_first_element,  drop_fields
+from data_config import EstablishmentID_Program
 
 logger = mylogger.get(__name__)
 
@@ -44,12 +46,47 @@ def get_surveydata_expanded(df:pd.DataFrame) -> pd.DataFrame:
   df_surveydata = df['SurveyData'].apply(json.loads)
   df_surveydata_expanded:pd.DataFrame =  pd.json_normalize(df_surveydata.tolist(), max_level=1)
   
-  df_surveydata_expanded = drop_fields(df_surveydata_expanded,keep_parent_fields)
+  # df_surveydata_expanded = drop_fields(df_surveydata_expanded,keep_parent_fields)
   df_final  = concat_drop_parent(df, df_surveydata_expanded, 'SurveyData')
   return df_final
 
 
-def prep_dataframe(df:pd.DataFrame):
+def ep_dates(raw_df:pd.DataFrame, columns:list[str])->pd.DataFrame:
+  df = raw_df.copy()
+  for col in columns:
+      if not pd.api.types.is_integer_dtype(df[col].dtype):
+        df[col] = df[col].fillna(0).astype(int)
+
+      # Convert integer to string with zero-padding to ensure length is 8
+      df[col] = df[col].astype(str).str.zfill(8)
+      
+      # Reformat string to match datetime format 'ddmmyyyy' -> 'dd-mm-yyyy'
+      df[col] = df[col].apply(lambda x: f"{x[:2]}-{x[2:4]}-{x[4:]}")
+      
+      # Convert string to datetime
+      df[col] = pd.to_datetime(df[col], format='%d-%m-%Y', errors='coerce')
+  return df  
+
+
+
+def prep_dataframe_episodes(df:pd.DataFrame) -> pd.DataFrame: 
+  processed_ep_df =  ep_dates(df, columns=['START_DATE', 'END_DATE'])
+  processed_ep_df['Program'] = processed_ep_df['PartitionKey'].map(EstablishmentID_Program)
+  
+  rename_columns = {
+      'SPECIFY_DRUG_OF_CONCERN': 'PDC',
+      'START_DATE': 'CommencementDate',
+      'END_DATE': 'EndDate',
+      # 'RowKey': 'EpisodeID',      
+  }  
+  renamed_columns_of_interest = ['SLK','Program', 'CommencementDate', 'EndDate', 'PDC']
+  processed_ep_df.rename(columns=rename_columns, inplace=True)
+  processed_ep_df = processed_ep_df[renamed_columns_of_interest]
+  return processed_ep_df
+
+
+
+def prep_dataframe(df:pd.DataFrame, prep_type: Literal['ATOM', 'NADA'] = 'ATOM'):
    # because Program is in SurveyData
   
   logger.debug(f"prep_dataframe of length {len(df)} : ")
@@ -72,11 +109,15 @@ def prep_dataframe(df:pd.DataFrame):
   # 'cannot mix list and non-list, non-null values', 
   # 'Conversion failed for column PrimaryCaregiver, Past4WkAodRisks with type object')
 
-  df8.drop(columns=['SLK'], inplace=True)
+  if 'SLK' in df8.columns:
+    df8.drop(columns=['SLK'], inplace=True) 
+  
   df8.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
   
   df9 = df8.sort_values(by="AssessmentDate")
-  
+ 
+  df9['PDC'] = df9['PDCSubstanceOrGambling']
+ 
   logger.debug(f"Done Prepping df")
   return df9
 

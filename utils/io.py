@@ -86,8 +86,16 @@ def read_parquet(file_path:str) -> pd.DataFrame|None:
     return df
   return None
 
+def write_parquet(df:pd.DataFrame, file_path:str, force=False) -> pd.DataFrame|None:
+  if force or os.path.exists(file_path):
+    df.to_parquet(f"{file_path}")
+    logger.info(f"Wrote to parquet file {file_path}")
+    return
+  logger.info(f"Did not write to  file {file_path}")
+ 
 
-def get_data(start_date, end_date, download_filepath:str, cache=False) -> pd.DataFrame|None:
+#TODO : merge new data into Df
+def get_data(table:str, start_date, end_date, download_filepath:str, cache=False) -> pd.DataFrame|None:
   #
   # get from ATOM Azure DB and save to disk
   #
@@ -99,7 +107,7 @@ def get_data(start_date, end_date, download_filepath:str, cache=False) -> pd.Dat
     else:
       logger.info("No cached data found, loading from DB")
 
-  results = get_results(start_date, end_date)
+  results = get_results(table, start_date, end_date)
   if not results:
     logger.error("Zero results returned from get_results (backend)")
     return None

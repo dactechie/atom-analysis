@@ -43,3 +43,16 @@ C:\Users\aftab.jalal\dev\AzuriteData
 
 
  ### Step 3 : Calculate the average score for each client for each stage and for each of the questions of interest.
+
+
+
+ ## Episode Data
+
+ ### Get Episode Data from Communicare Database in to Azure Table Storage
+  *Instructions*:
+   https://directionshealth.sharepoint.com/:w:/g/EQSqD2cJZK5JqN1k7x-BHwABEeiJxYYpeNX8ZOP9VIH3Jw?e=xABkCN
+
+ ### Run match_audit.py (to be hosted as a streamlit web app)
+
+
+  

@@ -15,7 +15,7 @@ class MyEnvironmentConfig:
     _instance = None
     env:str
     connection_string:str
-    survey_table_name:str
+    # survey_table_name:str
 
     def __new__(cls):
         if cls._instance is None:
@@ -33,4 +33,4 @@ class MyEnvironmentConfig:
         load_dotenv(env_file)
         
         cls.connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "BlankConnectionString")
-        cls.survey_table_name = os.getenv("SURVEY_TABLE_NAME","BlankTableName")
+        # cls.survey_table_name = os.getenv("SURVEY_TABLE_NAME","BlankTableName")

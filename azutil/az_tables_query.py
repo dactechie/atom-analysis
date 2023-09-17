@@ -19,25 +19,31 @@ logger = mylogger.get(__name__)
 
 class SampleTablesQuery(object):
 
-    def __init__(self):
+    def __init__(self, table_name:str):
       config = MyEnvironmentConfig()
     
       self.connection_string = config.connection_string
 
-      self.table_name = config.survey_table_name
+      self.table_name = table_name
       logger.info(f"SampleTablesQuery initialised with connection_string: {self.connection_string}")
 
         
-    def query_atoms(self, select_fields:list[str], filter_template:str, query_params:dict):    
+    def query_table(self, select_fields:list[str], filter_template:str, query_params:dict|None):    
         """
           parameters = {u"lower": 20211201, u"upper": 20220110}
           name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper"
         """
         with TableClient.from_connection_string(self.connection_string, self.table_name) as table_client:
             try:
-                queried_entities = table_client.query_entities(
-                    query_filter=filter_template, select=select_fields, parameters=query_params
-                )
+                if query_params and filter_template:
+                  queried_entities = table_client.query_entities(
+                      query_filter=filter_template, select=select_fields, parameters=query_params
+                  )
+                else:
+                  queried_entities = table_client.list_entities()
+                # # Using query_filter with parameter
+                # entities2 = table_client.query_entities(query_filter="Age gt @age", parameter={"age": 21})
+
 
                 for entity_chosen in queried_entities:
                     yield entity_chosen
