@@ -34,9 +34,12 @@ def get_nmeans_for_question(question, df_q, chosen_surveys):
   # the last survey rank is the number of surveys we are interested in
   min_assessments = chosen_surveys[-1]
  
-  col_df1 = getrecs_w_min_numvals_forcol(df_q, question, min_num_vals=min_assessments)
+  col_df1 = getrecs_w_min_numvals_forcol(df_q, question, min_num_vals=min_assessments) 
   col_df2 = chrono_rank_within_clientgroup(col_df1) 
 
+  if col_df2.empty:
+    logger.info(f"No records for {question}")
+    return [], []
   logger.info (f"NRecords For Col({question}): {len(col_df2)})#, Total:{len(df_q)}, {min(col_df2.AssessmentDate)}, {max(col_df2.AssessmentDate)}")
 
   averages, nth_assessment_contribs = get_nmeans_ncontribs(chosen_surveys, col_df2, question)

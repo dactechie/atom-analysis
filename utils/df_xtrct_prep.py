@@ -36,8 +36,9 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
   
   # Clean and Transform the dataset
   processed_df = prep_dataframe(raw_df) # only one filter: PDCSubstanceOrGambling has to have a value
-
-  processed_df = limit_clients_active_inperiod(processed_df, active_clients_start_date, active_clients_end_date)
+  if active_clients_start_date and active_clients_end_date:
+    processed_df = limit_clients_active_inperiod(processed_df, active_clients_start_date, active_clients_end_date)
+    
   # Limit to only clients who have completed at least 3 survey during the period of interest.
   if min_atoms_per_client > 0:
     processed_df = limit_min_num_assessments(processed_df, min_atoms_per_client)
@@ -54,7 +55,7 @@ def extract_prep_episode_data(extract_start_date, extract_end_date
                       # , active_clients_start_date
                       # , active_clients_end_date
                       , fname):
-  processed_filepath = f"./data/processed/{fname}.parquet"
+  
   raw_df = get_data('MDS',extract_start_date, extract_end_date, f"./data/in/{fname}.parquet", cache=True)
   
   if isinstance(raw_df, type(None)) or raw_df.empty:
@@ -62,6 +63,7 @@ def extract_prep_episode_data(extract_start_date, extract_end_date
     exit(1)
   processed_df = prep_dataframe_episodes(raw_df)
   
+  processed_filepath = f"./data/processed/{fname}.parquet"
   # cache the processed data
   write_parquet(processed_df, processed_filepath) # don't force overwrite
   logger.info(f"Done saving processed data to {processed_filepath}")  

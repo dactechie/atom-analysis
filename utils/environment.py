@@ -15,6 +15,7 @@ class MyEnvironmentConfig:
     _instance = None
     env:str
     connection_string:str
+    matching_ndays_slack:int
     # survey_table_name:str
 
     def __new__(cls):
@@ -33,4 +34,6 @@ class MyEnvironmentConfig:
         load_dotenv(env_file)
         
         cls.connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "BlankConnectionString")
+        cls.matching_ndays_slack = int(os.getenv("MATCHING_NDAYS_SLACK",0))
+        
         # cls.survey_table_name = os.getenv("SURVEY_TABLE_NAME","BlankTableName")

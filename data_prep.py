@@ -46,7 +46,7 @@ def get_surveydata_expanded(df:pd.DataFrame) -> pd.DataFrame:
   df_surveydata = df['SurveyData'].apply(json.loads)
   df_surveydata_expanded:pd.DataFrame =  pd.json_normalize(df_surveydata.tolist(), max_level=1)
   
-  # df_surveydata_expanded = drop_fields(df_surveydata_expanded,keep_parent_fields)
+  df_surveydata_expanded = drop_fields(df_surveydata_expanded,keep_parent_fields)
   df_final  = concat_drop_parent(df, df_surveydata_expanded, 'SurveyData')
   return df_final
 
@@ -99,7 +99,7 @@ def prep_dataframe(df:pd.DataFrame, prep_type: Literal['ATOM', 'NADA'] = 'ATOM')
   
   df6 = df5[df5.PDCSubstanceOrGambling.notna()]# removes rows without PDC
 
-  df6.loc[:,'Program'] = df6['RowKey'].str.split('_').str[0] # has to be made into category
+  # df6.loc[:,'Program'] = df6['RowKey'].str.split('_').str[0] # has to be made into category
   df7 = convert_dtypes(df6)
 
   # df.PDCAgeFirstUsed[(df.PDCAgeFirstUsed.notna()) & (df.PDCAgeFirstUsed != '')].astype(int)

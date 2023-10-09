@@ -1,5 +1,6 @@
 
 import os
+# import csv
 from datetime import datetime
 import pandas as pd
 import mylogger
@@ -7,6 +8,17 @@ from azutil.helper import get_results
 # from filters import get_outfilename_for_filters
 
 logger = mylogger.get(__name__)
+
+def read_csv_to_dataframe(csv_file_path) -> pd.DataFrame:
+    df = pd.read_csv(csv_file_path, encoding='utf-8-sig')
+    df.fillna("", inplace=True)
+    return df
+
+# def read_csv_to_dict_list(csv_file_path):
+#     with open(csv_file_path, mode='r', encoding='utf-8-sig') as file:
+#         csv_reader = csv.DictReader(file)
+#         data = [row for row in csv_reader]
+#     return data
 
 def create_results_folder(results_folder:str):
   # create results folder if it doesn't exist
@@ -87,7 +99,9 @@ def read_parquet(file_path:str) -> pd.DataFrame|None:
   return None
 
 def write_parquet(df:pd.DataFrame, file_path:str, force=False) -> pd.DataFrame|None:
-  if force or os.path.exists(file_path):
+  pathdirs_without_fname = file_path.split("/")[:-1]
+  parent_dir = "/".join(pathdirs_without_fname)
+  if force or os.path.exists(parent_dir):
     df.to_parquet(f"{file_path}")
     logger.info(f"Wrote to parquet file {file_path}")
     return

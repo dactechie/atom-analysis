@@ -1,6 +1,6 @@
 from pandas.api.types import CategoricalDtype
 
-keep_parent_fields = ['Program']
+keep_parent_fields = ['Program', 'Staff']
 
 # range
 remove_if_under_threshold = {
@@ -201,14 +201,25 @@ EstablishmentID_Program = {
 # ---- for NADA Drug mapping pivot
 
 
-PDC_ODC_fields = {
+# PDC_ODC_fields = {
+#     'ODC': {
+#       'FIELD' : 'OtherSubstancesConcernGambling',
+#       'NDAYS_FIELD' : 'DaysInLast28'  
+#     },
+#     'PDC':{
+#       'FIELD' : 'PDCSubstanceOrGambling',
+#       'NDAYS_FIELD' : 'PDCDaysInLast28'
+#     }
+# }
+
+PDC_ODC_fieldsv2 = {
     'ODC': {
-      'FIELD' : 'OtherSubstancesConcernGambling',
-      'NDAYS_FIELD' : 'DaysInLast28'  
+      'drug_name' : 'OtherSubstancesConcernGambling',
+      'used_in_last_4wks' : 'DaysInLast28'  
     },
     'PDC':{
-      'FIELD' : 'PDCSubstanceOrGambling',
-      'NDAYS_FIELD' : 'PDCDaysInLast28'
+      'drug_name' : 'PDCSubstanceOrGambling',
+      'used_in_last_4wks' : 'PDCDaysInLast28'
     }
 }
 

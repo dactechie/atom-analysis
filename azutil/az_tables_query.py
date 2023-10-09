@@ -10,7 +10,8 @@ USAGE:
     Set the environment variables with your own values before running the sample:
     1) AZURE_STORAGE_CONNECTION_STRING - the connection string to your storage account
 """
-from azure.data.tables import TableClient
+import pandas as pd
+from azure.data.tables import TableClient, TableEntity#, TableTransaction
 from azure.core.exceptions import HttpResponseError
 from utils.environment import MyEnvironmentConfig
 import mylogger
@@ -51,6 +52,74 @@ class SampleTablesQuery(object):
             except HttpResponseError as e:
                 print(e.message)
       
+
+
+    def batch_insert_data(self, data: pd.DataFrame):
+      with TableClient.from_connection_string(self.connection_string, self.table_name) as table_client:
+        try:
+          # Group DataFrame by 'PartitionKey'
+          grouped = data.groupby('PartitionKey')
+
+          for partition_key, group in grouped:
+            group_dict = group.to_dict('records')
+            # Convert keys to strings
+            group_dict = [{str(k): v for k, v in entity.items()} for entity in group_dict]
+            transaction_actions = [("create", TableEntity(**entity)) for entity in group_dict]
+
+            logger.debug(f"Transaction actions: {transaction_actions}")
+
+            response = table_client.submit_transaction(transaction_actions)
+            logger.info(f"Batch data with PartitionKey {partition_key} successfully inserted into table {self.table_name}. Response: {response}")
+
+        except HttpResponseError as e:
+          logger.error(f"An error occurred: {e.message}")
+        except Exception as e:
+          logger.error(f"An unexpected error occurred: {e}")          
+
+
+
+    # def batch_insert_data(self,  data: list[dict]):
+    #     with TableClient.from_connection_string(self.connection_string, self.table_name) as table_client:
+    #         try:
+    #             transaction_actions = []
+    #             for entity in data:
+    #                 table_entity = TableEntity(**entity)
+    #                 transaction_actions.append(("create", table_entity))
+
+    #             response = table_client.submit_transaction(transaction_actions)
+    #             logger.info(f"Batch data successfully inserted into table {self.table_name}. Response: {response}")
+
+    #         except HttpResponseError as e:
+    #             logger.error(f"An error occurred: {e.message}")
+
+
+    # def batch_insert_data(self, data: list[dict]) -> int: #data: pd.DataFrame):
+    #   with TableClient.from_connection_string(self.connection_string, self.table_name) as table_client:
+    #       try:
+    #           transaction = TableTransaction()
+    #           for entity in data:                            
+    #             table_entity = TableEntity(**entity)
+    #             transaction.add_action("create", table_entity)
+
+    #           response = table_client.submit_transaction(transaction)
+    #           logger.info(f"Batch data successfully inserted into table {self.table_name}. Response: {response}")
+    #           return 0
+
+    #       except HttpResponseError as e:
+    #           logger.error(f"An error occurred: {e.message}")
+    #           return -1             
+
+    # def insert_data(self, table_name: str, data: pd.DataFrame):
+    #       with TableClient.from_connection_string(self.connection_string, table_name) as table_client:
+    #           try:
+    #               for _, row in data.iterrows():
+    #                   entity = {column: row[column] for column in data.columns}
+    #                   table_entity = TableEntity(**entity)
+    #                   table_client.create_entity(entity=table_entity)
+    #               logger.info(f"Data successfully inserted into table {table_name}")
+
+    #           except HttpResponseError as e:
+    #               logger.error(f"An error occurred: {e.message}")
 
 
 # def build_query_components(filter):
