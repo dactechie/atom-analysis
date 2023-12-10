@@ -2,8 +2,9 @@
 #from typing import TYPE_CHECKING
 #if TYPE_CHECKING:
 # import os
+from typing import Literal
 import mylogger
-from utils.io import get_data, read_parquet, write_parquet
+from utils.io import get_data, read_parquet, write_parquet, read_csv_to_dataframe
 from data_prep import prep_dataframe, limit_min_num_assessments, limit_clients_active_inperiod, prep_dataframe_episodes
 
 logger = mylogger.get(__name__)
@@ -19,23 +20,23 @@ logger = mylogger.get(__name__)
 def extract_prep_atom_data(extract_start_date, extract_end_date
                       , active_clients_start_date
                       , active_clients_end_date
-                      , fname, min_atoms_per_client = -1) :#-> pd.DataFrame|None:
+                      , fname, min_atoms_per_client = -1, purpose:Literal['NADA', 'Matching']='Matching') :#-> pd.DataFrame|None:
   
-  processed_filepath = f"./data/processed/processed_all_cols_{fname}.parquet"
+  processed_filepath = f"./data/processed/atom_{purpose}_{fname}.parquet"
   processed_df = read_parquet(processed_filepath)
   
   if not(isinstance(processed_df, type(None)) or processed_df.empty):
     return processed_df
   
-  logger.info("No processed data found, loading from raw data.")    
-  raw_df = get_data('ATOM',extract_start_date, extract_end_date, f"./data/in/{fname}.parquet", cache=True)
+  logger.info("No processed data found, loading from raw data.")
+  raw_df = get_data('ATOM',extract_start_date, extract_end_date, f"./data/in/atom_{purpose}_{fname}.parquet", cache=True)
   
   if isinstance(raw_df, type(None)) or raw_df.empty:
     logger.error("No data found. Exiting.")
     exit(1)
   
   # Clean and Transform the dataset
-  processed_df = prep_dataframe(raw_df) # only one filter: PDCSubstanceOrGambling has to have a value
+  processed_df = prep_dataframe(raw_df, prep_type=purpose) # only one filter: PDCSubstanceOrGambling has to have a value
   if active_clients_start_date and active_clients_end_date:
     processed_df = limit_clients_active_inperiod(processed_df, active_clients_start_date, active_clients_end_date)
     
@@ -50,13 +51,19 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
   
   return processed_df
 
+def read_and_prep_csv(fname):
+  from utils.ccare_to_aztable import adjust_ccare_csv_for_aztable
+  raw_df= read_csv_to_dataframe(f"./data/in/{fname}.csv")
+  return adjust_ccare_csv_for_aztable(raw_df)
+
 
 def extract_prep_episode_data(extract_start_date, extract_end_date
                       # , active_clients_start_date
                       # , active_clients_end_date
                       , fname):
   
-  raw_df = get_data('MDS',extract_start_date, extract_end_date, f"./data/in/{fname}.parquet", cache=True)
+  raw_df =  read_and_prep_csv(f"NSW_CSV/{fname}")
+  # get_data('MDS',extract_start_date, extract_end_date, f"./data/in/{fname}.parquet", cache=True)
   
   if isinstance(raw_df, type(None)) or raw_df.empty:
     logger.error("No data found. Exiting.")
@@ -114,16 +121,16 @@ columns_of_interest = ['ESTABLISHMENT IDENTIFIER', 'GEOGRAPHICAL LOCATION', 'PMS
 
 
 # TODO : check code
-# def load_and_parse_csv(filepath):
-#     # Load the CSV
-#     df = pd.read_csv(filepath, header=None, names=column_names)
+def load_and_parse_csv(filepath):
+    # Load the CSV
+    df = pd.read_csv(filepath, header=None, names=column_names)
 
-#     # Select only the columns we care about
-#     df = df[columns_of_interest]
+    # Select only the columns we care about
+    df = df[columns_of_interest]
 
-#     df['CommencementDate'] = pd.to_datetime(df['CommencementDate'], format='%d%m%Y')
-#     df['EndDate'] = pd.to_datetime(df['EndDate'], format='%d%m%Y')    
-#     return df
+    df['CommencementDate'] = pd.to_datetime(df['CommencementDate'], format='%d%m%Y')
+    df['EndDate'] = pd.to_datetime(df['EndDate'], format='%d%m%Y')    
+    return df
 
 
 

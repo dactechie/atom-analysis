@@ -7,6 +7,28 @@ from utils.environment import MyEnvironmentConfig
 
 logger = mylogger.get(__name__)
 
+# def min_gaps_from_boundaries(atoms_df, eps_df ):#assessment_dates:pd.Series, eps_start:pd.Series, eps_end:pd.Series):
+   
+
+# def match_exclude(atoms, eps):
+
+
+# def first_last_atoms_inepisode():
+   
+#     # Merge using inner join, preserving indices
+#     merged_df = pd.merge(df1, df2, how='inner', left_index=True, right_index=True)
+
+#     first_assessment_idx = matched_df.groupby(['SLK', 'Program', 'CommencementDate', 'EndDate'])['AssessmentDate'].idxmin()
+#     last_assessment_idx = matched_df.groupby(['SLK', 'Program', 'CommencementDate', 'EndDate'])['AssessmentDate'].idxmax()
+#     # Create new columns to flag the first and last AssessmentDate within each episode
+#     matched_df['is_first_assessment'] = 0  # Initialize with zeros
+#     matched_df['is_last_assessment'] = 0  # Initialize with zeros
+
+#     # Set flags for first and last assessments
+#     matched_df.loc[first_assessment_idx, 'is_first_assessment'] = 1
+#     matched_df.loc[last_assessment_idx, 'is_last_assessment'] = 1
+
+
 
 def get_mask_datefit(assessment_date: pd.Series, episode_commencement_date: pd.Series, episode_end_date: pd.Series, slack_days=30):
     slack_td = pd.Timedelta(days=slack_days)
@@ -82,24 +104,22 @@ def get_eps_unmatched_atoms(atoms:pd.DataFrame,
 
 
 def extract_atom_n_episodes (extract_start_date, extract_end_date) -> tuple[pd.DataFrame, pd.DataFrame]:
-  fname = f"{extract_start_date}_{extract_end_date}" 
+  fname = f"{extract_start_date}-{extract_end_date}" 
 
   active_clients_start_date = None #'2020-01-01' 
   active_clients_end_date = None #'2023-09-15'  
   processed_atom_df = extract_prep_atom_data(extract_start_date, extract_end_date
                               , active_clients_start_date
                               , active_clients_end_date
-                              , fname)
+                              , fname, purpose='Matching')
   processed_ep_df = extract_prep_episode_data(extract_start_date, extract_end_date
-                              , f"eps_{fname}")  
-  atoms= processed_atom_df[['SLK', 'Program', 'Staff', 'AssessmentDate', 'PDC']]
-  return atoms, processed_ep_df
+                              , f"Matching_eps_{fname}")  
+  return processed_atom_df, processed_ep_df
 
 
 
-def download_attempt_match(extract_start_date:int , extract_end_date:int):  
-
-  atoms, processed_ep_df = extract_atom_n_episodes(extract_start_date, extract_end_date)
+def attempt_match(atoms:pd.DataFrame, processed_ep_df:pd.DataFrame):
+  
   matched = match_assessments(processed_ep_df, atoms, MyEnvironmentConfig().matching_ndays_slack)
   # processed_ep_df = load_and_parse_episode_csvs("./data/in/NSW_CSV/")  
   ep_df, unmatched_atoms_df = get_eps_unmatched_atoms(atoms, matched, processed_ep_df)
@@ -116,34 +136,52 @@ def program_mismatch(ep_df:pd.DataFrame, unmatched_atoms_df:pd.DataFrame) -> pd.
 #  program_mismatch_for_matched_slk = mismatch_df[['SLK','Program_atom', 'Program_ep','Staff',	'AssessmentDate','CommencementDate', 'EndDate']].drop_duplicates()
  program_mismatch_for_matched_slk = mismatch_df[['SLK','Program_atom', 'Program_ep','Staff',	'AssessmentDate']].drop_duplicates()
  return program_mismatch_for_matched_slk
- 
- 
+
+
+# class MatchingAudit:
+#   NoEpisodeForSLK: pd.DataFrame
+#   ProgramMismatch: pd.DataFrame
+
+#   # result of  atoms, processed_ep_df = extract_atom_n_episodes(extract_start_date, extract_end_date)
+#   def __init__(self, atoms, processed_ep_df):
+#      atoms, processed_ep_df
+
+#   def get_atoms_without_ep_slk(self):
+    
+
 """
 Writes the output to csv files
 """
-def mismatch_analysis(ep_df, unmatched_atoms_df):
-  # ep_df, unmatched_atoms_df = download_attempt_match()
+def write_audit_results_csv(results, period_str:str):
+  #write results to csv
+  parent_folder = "data/out/audits"
+  results['NoEpisodeForSLK'].to_csv(f'{parent_folder}/atoms__noep_for_slk_{period_str}.csv', index=False)
+  results['ProgramMismatch'].to_csv(f'{parent_folder}/program_mismatch_for_matched_slk_{period_str}.csv', index=False)   
+
+"""
+do all audits  and return results
+"""
+def do_audits(ep_df, unmatched_atoms_df):
   #SLK in atom but not in Episodes
   atoms__noep_for_slk = unmatched_atoms_df.loc[~unmatched_atoms_df['SLK'].isin(ep_df['SLK'])]
   
   program_mismatch_for_matched_slk = program_mismatch(ep_df, unmatched_atoms_df)
 
-  #write results to csv
-  atoms__noep_for_slk.to_csv('atoms__noep_for_slk.csv', index=False)
-  program_mismatch_for_matched_slk.to_csv('program_mismatch_for_matched_slk.csv', index=False)
-
-  return atoms__noep_for_slk, program_mismatch_for_matched_slk
+  return { "NoEpisodeForSLK": atoms__noep_for_slk, "ProgramMismatch": program_mismatch_for_matched_slk}
   # return unmatched_atoms_df
 
 
 def main(env='local'):
   MyEnvironmentConfig().setup(env)
-  extract_start_date = 20170101 # 20230501 #20220701
-  extract_end_date = 20230930
-   
-  ep_df, unmatched_atoms_df = download_attempt_match(extract_start_date, extract_end_date)
-  noep_for_slk, prog_mismatch_for_slk = mismatch_analysis(ep_df, unmatched_atoms_df)
-  return ep_df, unmatched_atoms_df,  noep_for_slk, prog_mismatch_for_slk 
+  extract_start_date =  20230701 # 20230501 #20220701
+  extract_end_date = 20231230
+  
+  atoms, processed_ep_df = extract_atom_n_episodes(extract_start_date, extract_end_date)
+  ep_df, unmatched_atoms_df = attempt_match(atoms, processed_ep_df)
+  audit_results = do_audits(ep_df, unmatched_atoms_df)
+
+  write_audit_results_csv(audit_results, f"{extract_start_date}-{extract_end_date}")
+  return ep_df, unmatched_atoms_df,  audit_results
 
   # MatchTmp_MatchedSLKEpisodeProgram
 
@@ -169,6 +207,6 @@ def main(env='local'):
 
 if __name__ == "__main__":
   #  ep_df = main2() #'prod')
-  ep_df, unmatched_atoms_df, noep_for_slk, prog_mismatch_for_slk = main()#'prod')
+  ep_df, unmatched_atoms_df, results = main('prod')
   print(ep_df)
-  print(unmatched_atoms_df)  
+  print(unmatched_atoms_df)

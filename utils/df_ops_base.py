@@ -6,8 +6,8 @@ def drop_fields(df:pd.DataFrame, fieldnames:list or str or tuple):
   return df2
 
 
-def concat_drop_parent(df, df2 ,parent_name:str) -> pd.DataFrame:
-   return pd.concat([df.drop(parent_name, axis=1), df2], axis=1)
+def concat_drop_parent(df, df2 ,drop_parent_name:str) -> pd.DataFrame:
+   return pd.concat([df.drop(drop_parent_name, axis=1), df2], axis=1)
 
 def get_non_empty_list_items(df:pd.DataFrame, field_name:str) -> pd.DataFrame:
   # get only rows where the list is not empty

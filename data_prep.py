@@ -4,10 +4,11 @@ from typing import Literal
 import pandas as pd
 import mylogger
 from data_config import keep_parent_fields
-from utils.dtypes import convert_dtypes
+from utils.dtypes import convert_dtypes, convert_to_datetime
 from utils.df_ops_base import concat_drop_parent, \
                             drop_notes_by_regex \
                       , normalize_first_element,  drop_fields
+from utils.fromstr import clean_and_parse_json
 from data_config import EstablishmentID_Program
 
 logger = mylogger.get(__name__)
@@ -38,16 +39,20 @@ def limit_clients_active_inperiod(df, start_date, end_date):
   return df_active_clients
 
 
-def get_surveydata_expanded(df:pd.DataFrame) -> pd.DataFrame:
+def get_surveydata_expanded(df:pd.DataFrame):#, prep_type:Literal['ATOM', 'NADA', 'Matching'] ) -> pd.DataFrame: 
   # https://dschoenleber.github.io/pandas-json-performance/
   
   logger.debug("\t get_surveydata_expanded")
 
-  df_surveydata = df['SurveyData'].apply(json.loads)
+  df_surveydata = df['SurveyData'].apply(clean_and_parse_json)
   df_surveydata_expanded:pd.DataFrame =  pd.json_normalize(df_surveydata.tolist(), max_level=1)
   
-  df_surveydata_expanded = drop_fields(df_surveydata_expanded,keep_parent_fields)
-  df_final  = concat_drop_parent(df, df_surveydata_expanded, 'SurveyData')
+  if keep_parent_fields:
+    existing_columns_to_remove = [col for col in keep_parent_fields if col in df_surveydata_expanded.columns]
+    if existing_columns_to_remove:
+      df_surveydata_expanded = drop_fields(df_surveydata_expanded, keep_parent_fields)
+  # df_surveydata_expanded = df_surveydata_expanded[ keep_parent_fields[prep_type] ]
+  df_final  = concat_drop_parent(df, df_surveydata_expanded, drop_parent_name='SurveyData')
   return df_final
 
 
@@ -55,7 +60,10 @@ def ep_dates(raw_df:pd.DataFrame, columns:list[str])->pd.DataFrame:
   df = raw_df.copy()
   for col in columns:
       if not pd.api.types.is_integer_dtype(df[col].dtype):
-        df[col] = df[col].fillna(0).astype(int)
+        if (df[col] == '').any():
+          df[col] = df[col].replace('', 0).astype(int)
+        else:
+          df[col] = df[col].fillna(0).astype(int)
 
       # Convert integer to string with zero-padding to ensure length is 8
       df[col] = df[col].astype(str).str.zfill(8)
@@ -85,12 +93,30 @@ def prep_dataframe_episodes(df:pd.DataFrame) -> pd.DataFrame:
   return processed_ep_df
 
 
-
-def prep_dataframe(df:pd.DataFrame, prep_type: Literal['ATOM', 'NADA'] = 'ATOM'):
-   # because Program is in SurveyData
-  
+def prep_dataframe_matching(df:pd.DataFrame):
   logger.debug(f"prep_dataframe of length {len(df)} : ")
 
+  df2 = get_surveydata_expanded(df.copy())
+  convert_to_datetime(df2, 'AssessmentDate')
+  if 'SLK' in df2.columns:
+    df2.drop(columns=['SLK'], inplace=True) 
+  
+  df2.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
+  df3 = normalize_first_element(df2,'PDC')
+  df4 = df3[['SLK', 'AssessmentDate', 'Program','Staff', 'RowKey', 'PDCSubstanceOrGambling']]
+  df4 = df4.rename(columns={'PDCSubstanceOrGambling': 'PDC'})
+  return df4
+
+
+  # df5 = normalize_first_element(df4,'PDC')
+
+def prep_dataframe(df:pd.DataFrame, prep_type: Literal['ATOM', 'NADA', 'Matching'] = 'ATOM'):
+   # because Program is in SurveyData
+  
+  if prep_type == 'Matching':
+    return prep_dataframe_matching(df)
+
+  logger.debug(f"prep_dataframe of length {len(df)} : ")
   df2 = get_surveydata_expanded(df.copy())
   df3 = drop_fields(df2,['ODC'])
  

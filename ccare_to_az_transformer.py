@@ -1,4 +1,5 @@
 from utils.io import read_csv_to_dataframe
+from utils.ccare_to_aztable import adjust_ccare_csv_for_aztable
 from azutil.az_tables_query import SampleTablesQuery
 import mylogger
 from utils.environment import MyEnvironmentConfig
@@ -21,13 +22,15 @@ logger = mylogger.get(__name__)
 
 def fetch_insert_data(table_name:str, source_file: str):
   data = read_csv_to_dataframe(f'./data/in/{source_file}')
+  new_data = adjust_ccare_csv_for_aztable(data)
   tableObject = SampleTablesQuery(table_name)
-  tableObject.batch_insert_data(data)
+  tableObject.batch_insert_data(new_data)
+  # ERROR - An unexpected error occurred: unsupported operand type(s) for +=: 'NoneType' and 'str'
    
 
 def main(env='local'):
   MyEnvironmentConfig().setup(env)
-  source_file = "ForAzTabl_short.csv" #"ForAzTabl_CcareAutomationReport_MDS_1Jul2018-30Sep2023-AllPrograms.csv"
+  source_file = "NSW_CSV/DATS_AllPrograms_01072023-30122023.csv" #"ForAzTabl_CcareAutomationReport_MDS_1Jul2018-30Sep2023-AllPrograms.csv"
   
   fetch_insert_data('MDSMatchingAudit', source_file)
 
