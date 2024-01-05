@@ -38,3 +38,67 @@ def normalize_first_element (l1:pd.DataFrame, dict_key:str):#, support:Optional[
   l2 = masked_rows.reset_index(drop=True)
   result = concat_drop_parent(l2, normd_pdc, dict_key)
   return result
+
+
+def get_right_only(matched_atoms: pd.DataFrame, atoms_df: pd.DataFrame, join_cols: list) -> pd.DataFrame:
+    # Perform an outer join
+    outer_merged_df = pd.merge(matched_atoms, atoms_df, how='outer',
+                               left_on=join_cols, right_on=join_cols, indicator=True)
+    # Filter rows that are only in atoms_df
+    only_in_atoms_df = outer_merged_df[outer_merged_df['_merge']
+                                       == 'right_only']
+    # Drop the indicator column and keep only columns from atoms_df
+    only_in_atoms_df = only_in_atoms_df.drop(columns=['_merge'])
+    cleaned_df = only_in_atoms_df.dropna(axis=1, how='all')
+    return cleaned_df
+
+
+"""
+  Mutually unmatched
+  merge_cols = ['SLK', 'Program']
+"""
+def get_lr_mux_unmatched(left_df:pd.DataFrame, right_df:pd.DataFrame, merge_cols:list['str']) \
+  -> tuple[pd.DataFrame, pd.DataFrame,pd.DataFrame, pd.DataFrame]:
+
+  merged_df = pd.merge(left_df, right_df, on=merge_cols, how='outer', indicator=True)
+  # Get non-matching rows for df1
+  left_non_matching = merged_df[merged_df['_merge'] == 'left_only']
+
+  # Get non-matching rows for df2
+  right_non_matching = merged_df[merged_df['_merge'] == 'right_only']
+  # Left outer join and filter for non-matching records
+  # left_non_matching = pd.merge(left_df, right_df, how='left', left_on=merge_cols, right_on=merge_cols, indicator=True)
+  # left_non_matching = left_non_matching[left_non_matching['_merge'] == 'left_only']
+
+  # Right outer join and filter for non-matching records
+  # right_non_matching = pd.merge(left_df, right_df, how='right', left_on=merge_cols, right_on=merge_cols, indicator=True)
+  # right_non_matching = right_non_matching[right_non_matching['_merge'] == 'right_only']
+
+  # Optionally, you can drop the '_merge' column if it's no longer needed
+  left_non_matching.drop(columns=['_merge'], inplace=True)
+  right_non_matching.drop(columns=['_merge'], inplace=True)
+
+  # rows with common SLK, PRogram (good rows)
+  common_rows = pd.merge(left_df, right_df, on=merge_cols, how='inner')
+    
+  # Step 2: Filter the original DataFrames to keep only the common rows
+  common_left = left_df[left_df[merge_cols].isin(common_rows[merge_cols]).all(axis=1)]
+  common_right = right_df[right_df[merge_cols].isin(common_rows[merge_cols]).all(axis=1)]
+
+  return left_non_matching, right_non_matching, common_left, common_right
+
+# """
+#   get_lr_mux
+#   LR - left and right join , mutually exclusive
+# """
+# def get_lr_mux(matched_atoms: pd.DataFrame, atoms_df: pd.DataFrame, join_cols: list) -> pd.DataFrame:
+#     # Perform an outer join
+#     outer_merged_df = pd.merge(matched_atoms, atoms_df, how='outer',
+#                                left_on=join_cols, right_on=join_cols, indicator=True)
+#     # Filter rows that are only in atoms_df
+#     only_in_atoms_df = outer_merged_df[outer_merged_df['_merge']
+#                                        == 'right_only']
+#     # Drop the indicator column and keep only columns from atoms_df
+#     only_in_atoms_df = only_in_atoms_df.drop(columns=['_merge'])
+#     cleaned_df = only_in_atoms_df.dropna(axis=1, how='all')
+#     return cleaned_df

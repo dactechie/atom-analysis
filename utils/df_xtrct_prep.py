@@ -26,6 +26,7 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
   processed_df = read_parquet(processed_filepath)
   
   if not(isinstance(processed_df, type(None)) or processed_df.empty):
+    logger.debug("found & returning pre-processed parquet file.")
     return processed_df
   
   logger.info("No processed data found, loading from raw data.")
@@ -41,14 +42,19 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
     processed_df = limit_clients_active_inperiod(processed_df, active_clients_start_date, active_clients_end_date)
     
   # Limit to only clients who have completed at least 3 survey during the period of interest.
-  if min_atoms_per_client > 0:
+  if purpose != 'NADA' and min_atoms_per_client > 0:
     processed_df = limit_min_num_assessments(processed_df, min_atoms_per_client)
   
   # cache the processed data
   # processed_df.to_parquet(f"{processed_filepath}")
-  write_parquet(processed_df, processed_filepath) # don't force overwrite
-  logger.info(f"Done saving processed data to {processed_filepath}")
-  
+  # try:
+  #   write_parquet(processed_df, processed_filepath) # don't force overwrite
+  #   logger.info(f"Done saving processed data to {processed_filepath}")
+  # except ArrowTypeError as re:
+  #   logger.error(f"ArrowTypeError: {re}. unable to save parquet file.")     
+  # except Exception as ae:
+  #   logger.error(f"ArrowTypeError: {ae}. unable to save parquet file.")    
+  # finally:
   return processed_df
 
 def read_and_prep_csv(fname):
