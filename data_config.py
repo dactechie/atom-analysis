@@ -1,6 +1,10 @@
 from pandas.api.types import CategoricalDtype
 
-keep_parent_fields = ['Program', 'Staff']
+keep_parent_fields = ['Program', 'Staff'] # if also in SurveyData 
+# {
+#   'Matching':['Program', 'Staff']
+# }
+
 
 # range
 remove_if_under_threshold = {
@@ -68,9 +72,9 @@ question_list_for_categories = [
   'CountryOfBirth',
   'LivingArrangement',
 
-  'PDCSubstanceOrGambling',
-  'PDCGoals',  
-  'PDCMethodOfUse',
+  # 'PDCSubstanceOrGambling',
+  # 'PDCGoals',  
+  # 'PDCMethodOfUse',
 
   'HowImportantIsChangeToYou',
   'HaveAnySocialSupport',  
@@ -86,14 +90,15 @@ question_list_for_categories = question_list_for_categories + list(predef_catego
 #    '^Past4Wk.*'
 # ]
 
+fieldname_suffixes_range= ["PerOccassionUse"]
 
 # replace left(key) value with the right value in dataset
 option_variants = {
-    'PDCMethodOfUse': {
-      'Ingests': 'Ingest',
-      'Injects': 'Inject',
-      'Smokes': 'Smoke',
-    },
+    # 'PDCMethodOfUse': {
+    #   'Ingests': 'Ingest',
+    #   'Injects': 'Inject',
+    #   'Smokes': 'Smoke',
+    # },
     'Past4WkDailyLivingImpacted': {
         'Once or twice a week' : 'Once or twice per week',
         'Three or four times a week': 'Three or four times per week'
@@ -112,12 +117,12 @@ data_types:dict = {
 'AssessmentDate': 'date',
 'SurveyName': 'string',
 
-'PDCSubstanceOrGambling': 'string',
-'PDCMethodOfUse': 'string',
-'PDCDaysInLast28': 'numeric',
-'PDCUnits': 'string',
+# 'PDCSubstanceOrGambling': 'string',
+# 'PDCMethodOfUse': 'string',
+# 'PDCDaysInLast28': 'numeric',
+# 'PDCUnits': 'string',
 
-'PDCHowMuchPerOccasion': 'range', # can be 'Other'/NaN/float/int/range -> convert to float64, exclude Other
+# 'PDCHowMuchPerOccasion': 'range', # can be 'Other'/NaN/float/int/range -> convert to float64, exclude Other
 
 'HaveYouEverInjected': 'string',
 'SDSIsAODUseOutOfControl': 'numeric',
@@ -212,14 +217,16 @@ EstablishmentID_Program = {
 #     }
 # }
 
-PDC_ODC_fieldsv2 = {
+PDC_ODC_ATOMfield_names = {
     'ODC': {
       'drug_name' : 'OtherSubstancesConcernGambling',
-      'used_in_last_4wks' : 'DaysInLast28'  
+      'used_in_last_4wks' : 'DaysInLast28',
+      'per_occassion': 'HowMuchPerOccasion',
     },
     'PDC':{
       'drug_name' : 'PDCSubstanceOrGambling',
-      'used_in_last_4wks' : 'PDCDaysInLast28'
+      'used_in_last_4wks' : 'PDCDaysInLast28',
+      'per_occassion': 'PDCHowMuchPerOccasion',
     }
 }
 
@@ -244,7 +251,7 @@ drug_categories = {
     'Cocaine': ['Cocaine'],
     'Cannabis': ['Cannabinoids and Related Drugs, n.f.d.', 'Cannabinoids'],
     'Amphetamines': ['Amphetamines, n.f.d.', 'Amphetamines, n.f.d', 'Methamphetamine'],
-    'Tranquilliser': ['Benzodiazepines, nec', 'Benzodiazepines, n.f.d', 'Benzodiazepines, n.f.d.',  'Diazepam'],
+    'Tranquiliser': ['Benzodiazepines, nec', 'Benzodiazepines, n.f.d', 'Benzodiazepines, n.f.d.',  'Diazepam'],
 
     'Another Drug':  ['Other', 'Psychostimulants, n.f.d.','Zolpidem', 'Caffeine',  'MDMA/Ecstasy',  ],
 }

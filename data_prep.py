@@ -10,6 +10,7 @@ from utils.df_ops_base import concat_drop_parent, \
                       , normalize_first_element,  drop_fields
 from utils.fromstr import clean_and_parse_json
 from data_config import EstablishmentID_Program
+from process_odc_cols import expand_drug_info
 
 logger = mylogger.get(__name__)
 
@@ -110,6 +111,40 @@ def prep_dataframe_matching(df:pd.DataFrame):
 
   # df5 = normalize_first_element(df4,'PDC')
 
+def prep_dataframe_nada(df:pd.DataFrame):
+
+  logger.debug(f"prep_dataframe of length {len(df)} : ")
+  df2 = get_surveydata_expanded(df.copy())
+ 
+  df4 = drop_notes_by_regex(df2) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
+  # df5 = normalize_first_element(df4,'PDC') #TODO: (df,'ODC') # only takes the first ODC   
+
+  df5 = expand_drug_info(df4)
+  
+  # df6 = df5[df5.PDCSubstanceOrGambling.notna()]# removes rows without PDC
+
+  # df6.loc[:,'Program'] = df6['RowKey'].str.split('_').str[0] # has to be made into category
+  df7 = convert_dtypes(df5)
+
+  # df.PDCAgeFirstUsed[(df.PDCAgeFirstUsed.notna()) & (df.PDCAgeFirstUsed != '')].astype(int)
+ # "Expected bytes, got a 'int' object", 'Conversion failed for column PDCAgeFirstUsed with type object'
+  # df8 = drop_fields(df7, ['PDCAgeFirstUsed',\
+  #                          'PrimaryCaregiver','Past4WkAodRisks']) 
+  # 'cannot mix list and non-list, non-null values', 
+  # 'Conversion failed for column PrimaryCaregiver, Past4WkAodRisks with type object')
+
+  if 'SLK' in df7.columns:
+    df7.drop(columns=['SLK'], inplace=True)
+  
+  df7.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
+  
+  df9 = df7.sort_values(by="AssessmentDate")
+ 
+  # df9['PDC'] = df9['PDCSubstanceOrGambling']
+ 
+  logger.debug(f"Done Prepping df")
+  return df9
+
 def prep_dataframe(df:pd.DataFrame, prep_type: Literal['ATOM', 'NADA', 'Matching'] = 'ATOM'):
    # because Program is in SurveyData
   
@@ -118,11 +153,12 @@ def prep_dataframe(df:pd.DataFrame, prep_type: Literal['ATOM', 'NADA', 'Matching
 
   logger.debug(f"prep_dataframe of length {len(df)} : ")
   df2 = get_surveydata_expanded(df.copy())
+
   df3 = drop_fields(df2,['ODC'])
- 
   df4 = drop_notes_by_regex(df3) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
   df5 = normalize_first_element(df4,'PDC') #TODO: (df,'ODC') # only takes the first ODC   
-  
+
+ 
   df6 = df5[df5.PDCSubstanceOrGambling.notna()]# removes rows without PDC
 
   # df6.loc[:,'Program'] = df6['RowKey'].str.split('_').str[0] # has to be made into category
