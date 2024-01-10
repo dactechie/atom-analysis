@@ -9,7 +9,7 @@ from utils.df_ops_base import concat_drop_parent, \
                             drop_notes_by_regex \
                       , normalize_first_element,  drop_fields
 from utils.fromstr import clean_and_parse_json
-from data_config import EstablishmentID_Program
+from data_config import EstablishmentID_Program, nada_cols, activities_w_days
 from process_odc_cols import expand_drug_info
 
 logger = mylogger.get(__name__)
@@ -111,6 +111,53 @@ def prep_dataframe_matching(df:pd.DataFrame):
 
   # df5 = normalize_first_element(df4,'PDC')
 
+# def get_val_or_none(dic, key ):
+#   if dic and key in dic:
+#     return dic[key]
+#   return None
+
+def get_days_or_none(dic):
+  if pd.isna(dic):
+    return None
+  return dic.get('Days')
+# get_val_or_none(dic, 'Days')
+
+
+# [Yes - parenting responsibilities but children don't live with me] 
+# [Yes - parenting responsibilities for children other than my own]  
+# [Living with children other than my own, but no parental responsibility]       
+def primary_care_under_5(x):
+  # if pd.isna(x):
+  if not x or not any(x):
+    return None
+  return 'Yes - primary caregiver: children under 5 years old' in x
+
+def primary_care_5to15(x):
+  if not x or not any(x):
+    return None
+  return 'Yes - primary caregiver: children 5 - 15 years old' in x
+
+
+def expand_activities_info(df1:pd.DataFrame):
+  new_fields_to_keep = []
+  df5 = df1.copy()
+ 
+  # df5['PaidWorkDays'] = df5['Past4WkEngagedInOtheractivities.Paid Work'].apply(get_days_or_none)
+  for k, v in activities_w_days.items():
+    df5[v] = df5[k].apply(get_days_or_none)
+
+  new_fields_to_keep.extend(activities_w_days.values())
+
+  #TODO: convert these to number
+  # this fixes the NaNs
+  df5['PrimaryCaregiver'] = df5['PrimaryCaregiver'].where(df5['PrimaryCaregiver'].notna(), None)
+
+  df5['PrimaryCaregiver_0-5'] = df5['PrimaryCaregiver'].apply(primary_care_under_5)
+  df5['PrimaryCaregiver_5-15']= df5['PrimaryCaregiver'].apply(primary_care_5to15)
+  new_fields_to_keep.extend(['PrimaryCaregiver_0-5', 'PrimaryCaregiver_5-15'])
+
+  return df5, new_fields_to_keep
+
 def prep_dataframe_nada(df:pd.DataFrame):
 
   logger.debug(f"prep_dataframe of length {len(df)} : ")
@@ -119,22 +166,20 @@ def prep_dataframe_nada(df:pd.DataFrame):
   df4 = drop_notes_by_regex(df2) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
   # df5 = normalize_first_element(df4,'PDC') #TODO: (df,'ODC') # only takes the first ODC   
 
-  df5 = expand_drug_info(df4)
+  df5, new_drug_fields = expand_drug_info(df4)
+
+
+  # df5['PaidWork'] = df5['Past4WkEngagedInOtheractivities.Paid Work'].apply(lambda x: None if pd.isna(x) else x)
+   
+  df51, new_activity_fields = expand_activities_info(df5)
+  all_cols = nada_cols + new_drug_fields + new_activity_fields
+  # PrimaryCaregiver :  [Yes - primary caregiver: children 15 - 18 yea...
   
   # df6 = df5[df5.PDCSubstanceOrGambling.notna()]# removes rows without PDC
-
+  df6 = df51[all_cols]
   # df6.loc[:,'Program'] = df6['RowKey'].str.split('_').str[0] # has to be made into category
-  df7 = convert_dtypes(df5)
+  df7 = convert_dtypes(df6)
 
-  # df.PDCAgeFirstUsed[(df.PDCAgeFirstUsed.notna()) & (df.PDCAgeFirstUsed != '')].astype(int)
- # "Expected bytes, got a 'int' object", 'Conversion failed for column PDCAgeFirstUsed with type object'
-  # df8 = drop_fields(df7, ['PDCAgeFirstUsed',\
-  #                          'PrimaryCaregiver','Past4WkAodRisks']) 
-  # 'cannot mix list and non-list, non-null values', 
-  # 'Conversion failed for column PrimaryCaregiver, Past4WkAodRisks with type object')
-
-  if 'SLK' in df7.columns:
-    df7.drop(columns=['SLK'], inplace=True)
   
   df7.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
   

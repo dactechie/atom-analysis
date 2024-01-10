@@ -5,7 +5,8 @@
 from typing import Literal
 import mylogger
 from utils.io import get_data, read_parquet, write_parquet, read_csv_to_dataframe
-from data_prep import prep_dataframe, limit_min_num_assessments, limit_clients_active_inperiod, prep_dataframe_episodes
+from data_prep import prep_dataframe, prep_dataframe_nada, limit_min_num_assessments, limit_clients_active_inperiod, prep_dataframe_episodes
+from utils.df_ops_base import float_date_parser
 
 logger = mylogger.get(__name__)
 
@@ -37,7 +38,11 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
     exit(1)
   
   # Clean and Transform the dataset
-  processed_df = prep_dataframe(raw_df, prep_type=purpose) # only one filter: PDCSubstanceOrGambling has to have a value
+  if purpose == 'NADA':
+    processed_df = prep_dataframe_nada(raw_df)
+  else:
+    processed_df = prep_dataframe(raw_df, prep_type=purpose) # only one filter: PDCSubstanceOrGambling has to have a value
+    
   if active_clients_start_date and active_clients_end_date:
     processed_df = limit_clients_active_inperiod(processed_df, active_clients_start_date, active_clients_end_date)
     
@@ -122,22 +127,26 @@ column_names = ['ESTABLISHMENT IDENTIFIER', 'GEOGRAPHICAL LOCATION', 'PMSEpisode
 #            , REFERRAL_TO_ANOTHER_SERVICE
 #            , SLK
 
-# List of columns we care about
-columns_of_interest = ['ESTABLISHMENT IDENTIFIER', 'GEOGRAPHICAL LOCATION', 'PMSEpisodeID', 'PMSPersonID', 'PDCSubstanceOfConcern', 'CommencementDate', 'EndDate', 'SLK']
 
-
-# TODO : check code
-def load_and_parse_csv(filepath):
+#Please use 'date_format' instead, or read your data in as 'object' dtype and then call 'to_datetime'.  
+def load_and_parse_csv(filepath:str, rename_columns,columns_of_interest, date_cols:list[str]):
     # Load the CSV
-    df = pd.read_csv(filepath, header=None, names=column_names)
 
-    # Select only the columns we care about
-    df = df[columns_of_interest]
+    df = pd.read_csv(filepath,  usecols=columns_of_interest)
+                    # , date_format='%d%m%Y', parse_dates=['START DATE', 'END DATE'])
+    # Apply the convert_date function to the date columns
+    # df['START DATE'] = df['START DATE'].apply(float_date_parser)
+    # df['END DATE'] = df['END DATE'].apply(float_date_parser)
 
-    df['CommencementDate'] = pd.to_datetime(df['CommencementDate'], format='%d%m%Y')
-    df['EndDate'] = pd.to_datetime(df['EndDate'], format='%d%m%Y')    
+    for dtcol in date_cols:
+       df[dtcol] = df[dtcol].apply(float_date_parser)
+       
+    df.rename(columns=rename_columns, inplace=True)
+   
+
+    # df['CommencementDate'] = pd.to_datetime(df['CommencementDate'], format='%d%m%Y')
+    # df['EndDate'] = pd.to_datetime(df['EndDate'], format='%d%m%Y')    
     return df
-
 
 
 # def load_and_parse_episode_csvs(directory):
@@ -167,7 +176,7 @@ def load_and_parse_csv(filepath):
 
 #     return final_df
 
-def load_and_parse_episode_csvs(directory):
+def load_and_parse_episode_csvs(directory, columns_of_interest):
     # List to hold dataframes
     dfs = []
     

@@ -1,5 +1,33 @@
 
+from datetime import datetime
 import pandas as pd
+
+
+"""
+  used to parse dates from Communicare extract of episodes
+"""
+def float_date_parser(date_val):
+     # Check if the input is NaN (Not a Number)
+    if pd.isna(date_val):
+        return datetime.now().date()  # 
+    
+    # if not isinstance(date_str, int) :
+    #     return datetime.now().date()  # Replace with today's date
+    # Check if the date_str is not a string or is an empty string
+    date_val = str(int(date_val)).zfill(8)
+    
+    # # Check if the string length is less than 8 characters
+    # if len(date_str) < 8:
+    #     # Possibly handle or log this case, as it's an unexpected format
+    #     return None  # or choose an appropriate default value
+
+    try:
+        return pd.to_datetime(date_val, format='%d%m%Y').date()
+    except ValueError:
+        # Handle the case where the date_str is not a valid date
+        # You can log this error if needed
+        return None  # or choose an appropriate default value
+    
 
 def drop_fields(df:pd.DataFrame, fieldnames:list or str or tuple):
   df2 = df.drop(fieldnames, axis=1)
