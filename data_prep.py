@@ -139,14 +139,14 @@ def primary_care_5to15(x):
 
 
 def expand_activities_info(df1:pd.DataFrame):
-  new_fields_to_keep = []
+  # new_fields_to_keep = []
   df5 = df1.copy()
  
   # df5['PaidWorkDays'] = df5['Past4WkEngagedInOtheractivities.Paid Work'].apply(get_days_or_none)
   for k, v in activities_w_days.items():
     df5[v] = df5[k].apply(get_days_or_none)
 
-  new_fields_to_keep.extend(activities_w_days.values())
+  # new_fields_to_keep.extend(activities_w_days.values())
 
   #TODO: convert these to number
   # this fixes the NaNs
@@ -154,9 +154,9 @@ def expand_activities_info(df1:pd.DataFrame):
 
   df5['PrimaryCaregiver_0-5'] = df5['PrimaryCaregiver'].apply(primary_care_under_5)
   df5['PrimaryCaregiver_5-15']= df5['PrimaryCaregiver'].apply(primary_care_5to15)
-  new_fields_to_keep.extend(['PrimaryCaregiver_0-5', 'PrimaryCaregiver_5-15'])
+  # new_fields_to_keep.extend(['PrimaryCaregiver_0-5', 'PrimaryCaregiver_5-15'])
 
-  return df5, new_fields_to_keep
+  return df5 #, new_fields_to_keep
 
 def prep_dataframe_nada(df:pd.DataFrame):
 
@@ -164,28 +164,18 @@ def prep_dataframe_nada(df:pd.DataFrame):
   df2 = get_surveydata_expanded(df.copy())
  
   df4 = drop_notes_by_regex(df2) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
-  # df5 = normalize_first_element(df4,'PDC') #TODO: (df,'ODC') # only takes the first ODC   
 
-  df5, new_drug_fields = expand_drug_info(df4)
+  df5 = expand_drug_info(df4)
 
-
-  # df5['PaidWork'] = df5['Past4WkEngagedInOtheractivities.Paid Work'].apply(lambda x: None if pd.isna(x) else x)
-   
-  df51, new_activity_fields = expand_activities_info(df5)
-  all_cols = nada_cols + new_drug_fields + new_activity_fields
-  # PrimaryCaregiver :  [Yes - primary caregiver: children 15 - 18 yea...
+  df51 = expand_activities_info(df5)
   
   # df6 = df5[df5.PDCSubstanceOrGambling.notna()]# removes rows without PDC
-  df6 = df51[all_cols]
-  # df6.loc[:,'Program'] = df6['RowKey'].str.split('_').str[0] # has to be made into category
-  df7 = convert_dtypes(df6)
+  df6 = df51[nada_cols]
 
-  
+  df7 = convert_dtypes(df6)  
   df7.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
   
   df9 = df7.sort_values(by="AssessmentDate")
- 
-  # df9['PDC'] = df9['PDCSubstanceOrGambling']
  
   logger.debug(f"Done Prepping df")
   return df9

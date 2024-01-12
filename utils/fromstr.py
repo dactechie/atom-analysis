@@ -1,11 +1,10 @@
 from datetime import datetime
 import numpy as np
 
-def get_date_from_yyyymmdd(yyyymmdd_str:str):
+def convert_format_datestr(date_string:str, from_format:str, to_format:str):
 
-  date1 = datetime.strptime(yyyymmdd_str, '%Y%m%d').strftime('%d/%m/%Y')
+  date1 = datetime.strptime(date_string, from_format).strftime(to_format)
   return date1
-
 
 def is_numeric(value):
     try:
