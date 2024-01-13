@@ -356,6 +356,8 @@ nada_cols = [
 
 ,'Past4WkNumInjectingDays'  # 136 ATOP 1K.2   Injected Total The total number of days injected in the past four weeks.
 
+
+
 # ,'Past4WkEngagedInOtheractivities.Paid Work'     # 143. ATOP 2A.2 ATOP Days Paid Work Total
 # # ,'Past4WkEngagedInOtheractivities.Voluntary Work'
 # ,'Past4WkEngagedInOtheractivities.Study - college, school or vocational education'   # 149. ATOP 2B.2 he total number of days of school or study in the past four weeks.
@@ -367,16 +369,38 @@ nada_cols = [
 
 , 'PaidWorkDays'
 , 'StudyDays'
-,'PrimaryCaregiver_0-5', 'PrimaryCaregiver_5-15'
+# ,'PrimaryCaregiver_0-5', 'PrimaryCaregiver_5-15'
 
-,'Past4WkHaveYouViolenceAbusive'  #156.  ATOP 2G  ATOP Violent To You Has anyone been violent (incl. domestic violence) towards the client in past four weeks?
-         ## or is it:  157 ATOP 2H Violent To Others Has the client been violent (incl. domestic violence) towards someone else in the past four weeks? ???????????????????????????
+ # Past4WkAodRisks  ["Violence / Assault",]  # Has anyone been violent (incl. domestic violence) towards the client in past four weeks?
+              #  #156.  ATOP 2G  ATOP Violent To You Has anyone been violent (incl. domestic violence) towards the client in past four weeks?
+
+,'Past4WkHaveYouViolenceAbusive'  # "Yes (risk assessment required)"
+         ##"Have you used violence or been abusive towards anyone, over the last 4 weeks?",:  157 ATOP 2H Violent To Others Has the client been violent (incl. domestic violence) towards someone else in the past four weeks?
+
+
 ,'Past4WkMentalHealth' #158  ATOP 2 I Psychological Health Status Client’s rating of their psychological wellbeing in past four weeks (anxiety, depression, problems with emotions and feelings) 0=poor 10=good
 ,'Past4WkPhysicalHealth'  # 159. ATOP 2J Physical Health Status Client’s rating of their physical health in past 4 weeks (extent of physical symptoms and bothered by illness)
 ,'Past4WkQualityOfLifeScore'  # 160.  ATOP 2K Qual of life  
 ]
 
+# -1 not answered/no answer
+notanswered_defaults = [
+  'ATOPInjectedUsedEquipment',           ##
+  'ATOPDailyTobaccoUse',                 ##
+  'YourCurrentHousing_Homeless',         ##
+  'YourCurrentHousing_Atriskofeviction', ##
 
+  'PrimaryCaregiver_0-5' ,
+  'PrimaryCaregiver_5-15',
+  'Past4WkBeenArrested',
+  
+  'Past4WkAodRisks_ViolentToYou',        ##
+
+  'Past4WkHaveYouViolenceAbusive', #  Has the client been violent 
+  'Past4WkPhysicalHealth'     , #not answered/no answer
+  'Past4WkMentalHealth'       ,
+  'Past4WkQualityOfLifeScore' ,
+]
 # 12. 2nd SDS 1.1 SDS Drug use out of control against the Intake drug 
 # 13. 2nd SDS 1.2 SDS Drug use missing anxious/worried against the intake drug) ???swapped field 
 # 14. 2nd SDS 1.3 SDS Drug use worry about use???swapped field 

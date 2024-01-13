@@ -4,6 +4,7 @@ from typing import Literal
 import pandas as pd
 import mylogger
 from data_config import keep_parent_fields
+from utils.base import check_for_string
 from utils.dtypes import convert_dtypes, convert_to_datetime
 from utils.df_ops_base import concat_drop_parent, \
                             drop_notes_by_regex \
@@ -126,16 +127,16 @@ def get_days_or_none(dic):
 # [Yes - parenting responsibilities but children don't live with me] 
 # [Yes - parenting responsibilities for children other than my own]  
 # [Living with children other than my own, but no parental responsibility]       
-def primary_care_under_5(x):
-  # if pd.isna(x):
-  if not x or not any(x):
-    return None
-  return 'Yes - primary caregiver: children under 5 years old' in x
+# def primary_care_under_5(x):
+#   # if pd.isna(x):
+#   if not x or not any(x):
+#     return None
+#   return 'Yes - primary caregiver: children under 5 years old' in x
 
-def primary_care_5to15(x):
-  if not x or not any(x):
-    return None
-  return 'Yes - primary caregiver: children 5 - 15 years old' in x
+# def primary_care_5to15(x):
+#   if not x or not any(x):
+#     return None
+#   return 'Yes - primary caregiver: children 5 - 15 years old' in x
 
 
 def expand_activities_info(df1:pd.DataFrame):
@@ -152,11 +153,34 @@ def expand_activities_info(df1:pd.DataFrame):
   # this fixes the NaNs
   df5['PrimaryCaregiver'] = df5['PrimaryCaregiver'].where(df5['PrimaryCaregiver'].notna(), None)
 
-  df5['PrimaryCaregiver_0-5'] = df5['PrimaryCaregiver'].apply(primary_care_under_5)
-  df5['PrimaryCaregiver_5-15']= df5['PrimaryCaregiver'].apply(primary_care_5to15)
+  # df5['PrimaryCaregiver_0-5'] = df5['PrimaryCaregiver'].apply(primary_care_under_5)
+  # df5['PrimaryCaregiver_5-15']= df5['PrimaryCaregiver'].apply(primary_care_5to15)
   # new_fields_to_keep.extend(['PrimaryCaregiver_0-5', 'PrimaryCaregiver_5-15'])
 
   return df5 #, new_fields_to_keep
+
+def nadafield_from_multiselect(df1:pd.DataFrame) -> pd.DataFrame:
+  df= df1.copy()
+  mulselect_option_to_nadafield = {
+    'Past4WkAodRisks': {'ATOPEviction': "At risk of eviction",
+                         'ATOPHomeless': "Homeless"},
+    'PrimaryCaregiver': {
+      'PrimaryCaregiver_0-5':'Yes - primary caregiver: children under 5 years old'  ,
+      'PrimaryCaregiver_5-15': 'Yes - primary caregiver: children 5 - 15 years old',
+
+    }
+
+  }
+  # no_answer_value = -1  # do this together later for all fields.
+  for ATOMMultiSelectQuestion, nadafield_searchstr in mulselect_option_to_nadafield.items():
+    for nadafield, search_str in nadafield_searchstr.items():
+      df[nadafield] = df[ATOMMultiSelectQuestion].apply(lambda x: check_for_string(x, search_str))
+
+  
+  # df['ATOPEviction'] = df['Past4WkAodRisks'].apply(lambda x: check_for_string(x, "At risk of eviction"))
+  
+  return df
+
 
 def prep_dataframe_nada(df:pd.DataFrame):
 
@@ -168,7 +192,7 @@ def prep_dataframe_nada(df:pd.DataFrame):
   df5 = expand_drug_info(df4)
 
   df51 = expand_activities_info(df5)
-  
+  df52 = nadafield_from_multiselect(df51)
   # df6 = df5[df5.PDCSubstanceOrGambling.notna()]# removes rows without PDC
   df6 = df51[nada_cols]
 
