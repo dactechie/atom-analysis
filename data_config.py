@@ -7,11 +7,11 @@ keep_parent_fields = ['Program', 'Staff'] # if also in SurveyData
 
 
 # range
-remove_if_under_threshold = {
-     'PDCHowMuchPerOccasion' : {
-          'Other': 2 # if under 2 percent of dataset, delete records
-     }
-}
+# remove_if_under_threshold = {
+#      'PDCHowMuchPerOccasion' : {
+#           'Other': 2 # if under 2 percent of dataset, delete records
+#      }
+# }
 category_yes_no = CategoricalDtype(['Yes', 'No'])
 
 # TODO Fix:
@@ -245,7 +245,7 @@ nada_drug_days_categories = {
 
     'Cocaine': ['Cocaine'],
     'Cannabis': ['Cannabinoids and Related Drugs, n.f.d.', 'Cannabinoids and related drugs, n.f.d.', 'Cannabinoids'],
-    'Amphetamines': ['Amphetamines, n.f.d.', 'Amphetamines, n.f.d', 'Methamphetamine'],     
+    'Amphetamines': ['Amphetamines, n.f.d.', 'Amphetamines, n.f.d', 'Methamphetamine','Dexamphetamine'],     
     'Benzodiazepines': ['Benzodiazepines, nec', 'Benzodiazepines, n.e.c.', 'Benzodiazepines, n.f.d', 'Benzodiazepines, n.f.d.','Diazepam' ],
     # 'Another Drug':  [
     #    'Opioid Antagonists, n.e.c.','Volatile Nitrates, n.e.c.', 'Lithium',
@@ -254,9 +254,14 @@ nada_drug_days_categories = {
     #                     'Psilocybin or Psilocin', 'Amyl nitrate', 'Other Volatile Solvents, n.e.c.' ],
     'Nicotine': ['Nicotine'],
     'Gambling':['Gambling'],
-    'Another Drug1':[], # hack for expand_drug_info to work ->  for drug_cat in nada_drug_days_categories.keys():
-    'Another Drug2': [] # hack for expand_drug_info to work ->  for drug_cat in nada_drug_days_categories.keys():
+    'Another Drug1':[], # h ack for expand_drug_info to work ->  for drug_cat in nada_drug_days_categories.keys():
+    'Another Drug2': [] # h ack for expand_drug_info to work ->  for drug_cat in nada_drug_days_categories.keys():
 }
+
+
+nada_cols_final = [
+  'AgencyCode'
+]
 
 nada_cols = [
 'Program' # AgencyCode
@@ -274,14 +279,14 @@ nada_cols = [
 ,'SDSHowDifficultToStopOrGoWithout'  # 11     Q5. How difficult would you/did you find it to stop  
 
 ## DU 
-,'Alcohol_DaysInLast28'
-,'Cannabis_DaysInLast28'  # 77. ATOP 1B.3   Cannabis Total (past 4 weeks)
-,'Heroin_DaysInLast28'
-,'Other Opioids_DaysInLast28'
-,'Cocaine_DaysInLast28'
-,'Amphetamines_DaysInLast28'
-,'Benzodiazepines_DaysInLast28'
-,'Another Drug1_DaysInLast28'
+# ,'Alcohol_DaysInLast28'
+# ,'Cannabis_DaysInLast28'  # 77. ATOP 1B.3   Cannabis Total (past 4 weeks)
+# ,'Heroin_DaysInLast28'
+# ,'Other Opioids_DaysInLast28'
+# ,'Cocaine_DaysInLast28'
+# ,'Amphetamines_DaysInLast28'
+# ,'Benzodiazepines_DaysInLast28'
+# ,'Another Drug1_DaysInLast28'
 
 
 ,'K10Q01'  # 30 
@@ -308,6 +313,9 @@ nada_cols = [
 # # 70 Total Alcohol : The total number of days alcohol consumed in the past four weeks.
 ,'Alcohol_DaysInLast28'
 # #71. ATOP 1A.4  ATOP Alcohol No Answer  ; # 0 asked -1 not asked
+
+, 'Alcohol_PerOccassionUse' # for DU
+
 
 # #72 # Cannabis Typical Qty 
 # # The amount of cannabis consumed on a typical day of cannabis use in the past four weeks. 
@@ -354,6 +362,8 @@ nada_cols = [
 ,'Nicotine_TypicalQtyStr'  # TODO: WARNING :typical day  != occassion
 ,'Nicotine_DaysInLast28'
 
+, 'Nicotine_PerOccassionUse' # for DU
+
 ,'Past4WkNumInjectingDays'  # 136 ATOP 1K.2   Injected Total The total number of days injected in the past four weeks.
 
 
@@ -361,7 +371,7 @@ nada_cols = [
 # ,'Past4WkEngagedInOtheractivities.Paid Work'     # 143. ATOP 2A.2 ATOP Days Paid Work Total
 # # ,'Past4WkEngagedInOtheractivities.Voluntary Work'
 # ,'Past4WkEngagedInOtheractivities.Study - college, school or vocational education'   # 149. ATOP 2B.2 he total number of days of school or study in the past four weeks.
-
+, "ATOPHomeless",	"ATOPRiskEviction",	"PrimaryCaregiver_0-5",	"PrimaryCaregiver_5-15"
 ,'Past4WkBeenArrested' # 155  ATOP 2F Has the client been arrested over the past four weeks?
 
 # ,'Gambling_PerOccassionUse'  ->> Question: should this be "Other drug" or  excluded all togther ?
@@ -371,12 +381,12 @@ nada_cols = [
 , 'StudyDays'
 # ,'PrimaryCaregiver_0-5', 'PrimaryCaregiver_5-15'
 
+, 'Past4Wk_ViolentToYou' # 
  # Past4WkAodRisks  ["Violence / Assault",]  # Has anyone been violent (incl. domestic violence) towards the client in past four weeks?
               #  #156.  ATOP 2G  ATOP Violent To You Has anyone been violent (incl. domestic violence) towards the client in past four weeks?
 
-,'Past4WkHaveYouViolenceAbusive'  # "Yes (risk assessment required)"
+,'Past4WkHaveYouViolenceAbusive'  # ATOM:"Have you used violence or been abusive towards anyone, over the last 4 weeks?", "Yes (risk assessment required)"
          ##"Have you used violence or been abusive towards anyone, over the last 4 weeks?",:  157 ATOP 2H Violent To Others Has the client been violent (incl. domestic violence) towards someone else in the past four weeks?
-
 
 ,'Past4WkMentalHealth' #158  ATOP 2 I Psychological Health Status Client’s rating of their psychological wellbeing in past four weeks (anxiety, depression, problems with emotions and feelings) 0=poor 10=good
 ,'Past4WkPhysicalHealth'  # 159. ATOP 2J Physical Health Status Client’s rating of their physical health in past 4 weeks (extent of physical symptoms and bothered by illness)
@@ -401,6 +411,76 @@ notanswered_defaults = [
   'Past4WkMentalHealth'       ,
   'Past4WkQualityOfLifeScore' ,
 ]
+
+nada_final_fields = [
+ "AgencyCode","PMSEpisodeID",	"PMSPersonID",	"Stage",	"AssessmentDate",	
+
+"PDCCode",# SDS 1.0
+"SDSIsAODUseOutOfControl",	"SDSDoesMissingFixMakeAnxious",	"SDSHowMuchDoYouWorryAboutAODUse",
+  	"SDSDoYouWishToStop",	"SDSHowDifficultToStopOrGoWithout",		
+"2nd SDS 1.1",	"2nd SDS 1.2",	"2nd SDS 1.3",	"2nd SDS 1.4",	"2nd SDS 1.5",		
+# DU ---
+"Heroin_DaysInLast28",	"Other Opioids_DaysInLast28",	"Cannabis_DaysInLast28",	
+  "Cocaine_DaysInLast28",	"Amphetamines_DaysInLast28", "Benzodiazepines_DaysInLast28",
+  "Another Drug1_DaysInLast28","Alcohol_DaysInLast28","Alcohol_PerOccassionUse",
+  "DUDrinkingmoreheavilynumberofdrinks","DUDrinkingmoreheavilynumberofdays",
+  "Nicotine_DaysInLast28", "Nicotine_PerOccassionUse",
+
+"K10Q01",	"K10Q02",	"K10Q03",	"K10Q04",	"K10Q05",	"K10Q06",	"K10Q07",	"K10Q08",	"K10Q09",	"K10Q10",		
+"K10Q11",	"K10Q12",	"K10Q13",	"K10Q14",	
+
+# blanks ---------------------------------------------------
+"QoLRatequalityoflife",	"QoLRatehealth",	"QoLRateenergyforeverydaylife",	"QoLMoneytomeetneeds",
+"QoLAbilitytoperformdailyactivities",	"QoLSatisfiedwithself",	"QoLSatisfiedwithpersonalrelationships",
+	"QoLSatisfiedwithconditionsofyourlivingplace",  "QoLPrincipalsourceofincome(MDS)", 
+  "QoLLivingarrangements(MDS)",	"QoLUsualaccommodation(MDS)",			
+"QoLNumberofoccasionsarrested(BTOM)",  "QoLNumberofarrestsforrecentoffences(BTOM)",
+  "BBVInjectingdruguse(BTOM)",	"BBVSharingofneedleandsyringe(BTOM)",
+    	"BBVSharingotherinjectingequipment(BTOM)",	"BBVDrugoverdoses(BTOM)",		
+"NDDoyousmoketobacco?",	"NDHowsoonafterwakingdoyousmokeyourfirstcigarette?",
+    "NDHowmanycigarettessmokedonatypicalday?","NDwithdrawalsorcravingsexperienced?",			
+#--------------------blanks
+
+# -- ATOP
+"Alcohol_TypicalQtyStr",	"ATOPAlcoholWk4",	"ATOPAlcoholWk3",	"ATOPAlcoholWk2",
+      "ATOPAlcoholWk1",	"Alcohol_DaysInLast28",	"ATOPAlcoholNoAnswer",
+"Cannabis_TypicalQtyStr",	"ATOPCannabisWk4",	"ATOPCannabisWk3",	"ATOPCannabisWk2",
+      "ATOPCannabisWk1",	"Cannabis_DaysInLast28",	"ATOPCannabisNoAnswer",
+"Amphetamines_TypicalQtyStr",	"ATOPAmphetamineWk4",	"ATOPAmphetamineWk3",	"ATOPAmphetamineWk2",
+      "ATOPAmphetamineWk1",	"Amphetamines_DaysInLast28",	"ATOPAmphetamineNoAnswer",
+"Benzodiazepines_TypicalQtyStr",	"ATOPBenzodiazepinesWk4",	"ATOPBenzodiazepinesWk3",	"ATOPBenzodiazepinesWk2",
+    	"ATOPBenzodiazepinesWk1",	"Benzodiazepines_DaysInLast28",	"ATOPBenzodiazepinesNoAnswer",
+"Heroin_TypicalQtyStr",	"ATOPHeroinWk4",	"ATOPHeroinWk3",	"ATOPHeroinWk2",
+      "ATOPHeroinWk1",	"Heroin_DaysInLast28",	"ATOPHeroinNoAnswer",
+"Other Opioids_TypicalQtyStr",	"ATOPOtherOpiodsWk4",	"ATOPOtherOpiodsWk3",	"ATOPOtherOpiodsWk2",
+      "ATOPOtherOpiodsWk1",	"Other Opioids_DaysInLast28",	"ATOPOtherOpiodsNoAnswer",
+"Cocaine_TypicalQtyStr",	"ATOPCocaineWk4",	"ATOPCocaineWk3",	"ATOPCocaineWk2",	
+      "ATOPCocaineWk1",	"Cocaine_DaysInLast28",	"ATOPCocaineNoAnswer",
+"Another Drug1",	"Another Drug1_TypicalQtyStr",	"ATOPOtherSubstance1Wk4",	"ATOPOtherSubstance1Wk3",	"ATOPOtherSubstance1Wk2",
+    	"ATOPOtherSubstance1Wk1",	"Another Drug1_DaysInLast28",'Another Drug1_NoAnswer' ,
+
+"Another Drug2",	"Another Drug2_TypicalQtyStr",	"ATOPOtherSubstance2Wk4",	"ATOPOtherSubstance2Wk3",	"ATOPOtherSubstance2Wk2",
+    	"ATOPOtherSubstance2Wk1",	"Another Drug2_DaysInLast28",'Another Drug2_NoAnswer',
+
+"ATOPDailyTobaccoUse",	"Nicotine_TypicalQtyStr",				##  TODO	
+
+"ATOPInjectedWk4",	"ATOPInjectedWk3",	"ATOPInjectedWk2",	"ATOPInjectedWk1",
+    	"Past4WkNumInjectingDays",	"ATOPInjectedNoAnswer",	"ATOPInjectedUsedEquipment",
+
+"ATOPDaysPaidWorkWk4",	"ATOPDaysPaidWorkWk3",	"ATOPDaysPaidWorkWk2",	
+      "ATOPDaysPaidWorkWk1",	"PaidWorkDays",	"ATOPDaysPaidWorkNoAnswer",	
+"ATOPDaysEducationWk4",	"ATOPDaysEducationWk3",	"ATOPDaysEducationWk2",	
+      "ATOPDaysEducationWk1",	"StudyDays",	"ATOPDaysEducationNoAnswer",
+
+"ATOPHomeless",	"ATOPRiskEviction",	"PrimaryCaregiver_0-5",	"PrimaryCaregiver_5-15",			
+
+"Past4WkBeenArrested",	"Past4Wk_ViolentToYou", "Past4WkHaveYouViolenceAbusive",
+
+"Past4WkMentalHealth",	"Past4WkPhysicalHealth",	"Past4WkQualityOfLifeScore",				
+
+]
+
+
 # 12. 2nd SDS 1.1 SDS Drug use out of control against the Intake drug 
 # 13. 2nd SDS 1.2 SDS Drug use missing anxious/worried against the intake drug) ???swapped field 
 # 14. 2nd SDS 1.3 SDS Drug use worry about use???swapped field 

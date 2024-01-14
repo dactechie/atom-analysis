@@ -8,9 +8,10 @@ from utils.base import check_for_string
 from utils.dtypes import convert_dtypes, convert_to_datetime
 from utils.df_ops_base import concat_drop_parent, \
                             drop_notes_by_regex \
-                      , normalize_first_element,  drop_fields
+                      , normalize_first_element,  drop_fields,\
+                          to_num_yn_none, to_num_bool_none,transform_multiple
 from utils.fromstr import clean_and_parse_json
-from data_config import EstablishmentID_Program, nada_cols, activities_w_days
+from data_config import EstablishmentID_Program, nada_cols #, activities_w_days
 from process_odc_cols import expand_drug_info
 
 logger = mylogger.get(__name__)
@@ -117,58 +118,22 @@ def prep_dataframe_matching(df:pd.DataFrame):
 #     return dic[key]
 #   return None
 
-def get_days_or_none(dic):
-  if pd.isna(dic):
-    return None
-  return dic.get('Days')
-# get_val_or_none(dic, 'Days')
-
-
-# [Yes - parenting responsibilities but children don't live with me] 
-# [Yes - parenting responsibilities for children other than my own]  
-# [Living with children other than my own, but no parental responsibility]       
-# def primary_care_under_5(x):
-#   # if pd.isna(x):
-#   if not x or not any(x):
-#     return None
-#   return 'Yes - primary caregiver: children under 5 years old' in x
-
-# def primary_care_5to15(x):
-#   if not x or not any(x):
-#     return None
-#   return 'Yes - primary caregiver: children 5 - 15 years old' in x
-
-
-def expand_activities_info(df1:pd.DataFrame):
-  # new_fields_to_keep = []
-  df5 = df1.copy()
- 
-  # df5['PaidWorkDays'] = df5['Past4WkEngagedInOtheractivities.Paid Work'].apply(get_days_or_none)
-  for k, v in activities_w_days.items():
-    df5[v] = df5[k].apply(get_days_or_none)
-
-  # new_fields_to_keep.extend(activities_w_days.values())
-
-  #TODO: convert these to number
-  # this fixes the NaNs
-  df5['PrimaryCaregiver'] = df5['PrimaryCaregiver'].where(df5['PrimaryCaregiver'].notna(), None)
-
-  # df5['PrimaryCaregiver_0-5'] = df5['PrimaryCaregiver'].apply(primary_care_under_5)
-  # df5['PrimaryCaregiver_5-15']= df5['PrimaryCaregiver'].apply(primary_care_5to15)
-  # new_fields_to_keep.extend(['PrimaryCaregiver_0-5', 'PrimaryCaregiver_5-15'])
-
-  return df5 #, new_fields_to_keep
 
 def nadafield_from_multiselect(df1:pd.DataFrame) -> pd.DataFrame:
   df= df1.copy()
   mulselect_option_to_nadafield = {
-    'Past4WkAodRisks': {'ATOPEviction': "At risk of eviction",
-                         'ATOPHomeless': "Homeless"},
+    'Past4WkAodRisks': {'ATOPRiskEviction': "At risk of eviction",
+                         'ATOPHomeless': "Homeless",
+                         'Past4Wk_ViolentToYou': "Violence / Assault"
+                         },
     'PrimaryCaregiver': {
       'PrimaryCaregiver_0-5':'Yes - primary caregiver: children under 5 years old'  ,
       'PrimaryCaregiver_5-15': 'Yes - primary caregiver: children 5 - 15 years old',
 
-    }
+    },
+    
+    'Past4WkEngagedInOtheractivities.Paid Work': { 'PaidWorkDays' :'Days'}, 
+      'Past4WkEngagedInOtheractivities.Study - college, school or vocational education':{'StudyDays':'Days'}
 
   }
   # no_answer_value = -1  # do this together later for all fields.
@@ -176,11 +141,27 @@ def nadafield_from_multiselect(df1:pd.DataFrame) -> pd.DataFrame:
     for nadafield, search_str in nadafield_searchstr.items():
       df[nadafield] = df[ATOMMultiSelectQuestion].apply(lambda x: check_for_string(x, search_str))
 
-  
+  # df['PaidWorkDays'][df['PaidWorkDays'].notna()]
   # df['ATOPEviction'] = df['Past4WkAodRisks'].apply(lambda x: check_for_string(x, "At risk of eviction"))
   
   return df
 
+def convert_yes_nofields(df1, field_names):
+  return transform_multiple(df1, field_names,to_num_yn_none)
+
+def convert_true_falsefields(df1, field_names):
+  return transform_multiple(df1, field_names,to_num_bool_none)
+
+  # df= df1.copy()
+  # df[field_names] = df[field_names].apply(lambda x: '0' 
+  #                                         if x =='No' else '1' 
+  #                                         if x is not None else None)
+  # return df
+
+def get_stage_per_episode(df:pd.DataFrame)-> pd.Series:  
+  df = df.sort_values(by=["PMSEpisodeID", "AssessmentDate"])
+  # Rank the assessments within each client
+  return  df.groupby('PMSEpisodeID').cumcount()
 
 def prep_dataframe_nada(df:pd.DataFrame):
 
@@ -191,16 +172,23 @@ def prep_dataframe_nada(df:pd.DataFrame):
 
   df5 = expand_drug_info(df4)
 
-  df51 = expand_activities_info(df5)
-  df52 = nadafield_from_multiselect(df51)
+  # df51 = expand_activities_info(df5)
+  df51 = nadafield_from_multiselect(df5)
   # df6 = df5[df5.PDCSubstanceOrGambling.notna()]# removes rows without PDC
-  df6 = df51[nada_cols]
+  
+  yes_nofields = ['Past4WkBeenArrested', 'Past4WkHaveYouViolenceAbusive']
+
+  df52 = convert_yes_nofields(df51, yes_nofields)
+  bool_fields = ['ATOPHomeless',	'ATOPRiskEviction',	'PrimaryCaregiver_0-5',
+                 	'PrimaryCaregiver_5-15',	'Past4Wk_ViolentToYou',]
+  df53 = convert_true_falsefields(df52, bool_fields)
+   
+  df6 = df53[nada_cols]
 
   df7 = convert_dtypes(df6)  
   df7.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
   
   df9 = df7.sort_values(by="AssessmentDate")
- 
   logger.debug(f"Done Prepping df")
   return df9
 

@@ -3,6 +3,27 @@ from datetime import datetime
 import pandas as pd
 
 
+def to_num_yn_none(x) -> str|None:
+    if x == 'No':
+        return '0'
+    elif not pd.isna(x):
+        return '1'
+    else:
+        return None
+
+def to_num_bool_none(x:bool|None) -> str|None:
+  if pd.isna(x):
+      return None
+  if x ==  True:
+      return '1'
+  return '0'
+    
+  
+def transform_multiple(df1:pd.DataFrame, fields:list[str], transformer_fn)-> pd.DataFrame:
+  df = df1.copy()  
+  df[fields] = df[fields].apply(lambda field_series: field_series.apply(transformer_fn))
+  return df
+
 """
   used to parse dates from Communicare extract of episodes
 """

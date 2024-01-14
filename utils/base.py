@@ -7,9 +7,10 @@
 def merge_dicts_exclude_keys(dict1, dict2, exclude_keys):
     return {k: v for k, v in {**dict1, **dict2}.items() if k not in exclude_keys}
 
-
-def check_for_string(row: list, str_to_check: str) -> bool | None:
-    if isinstance(row, list):
-        return any(item == str_to_check for item in row)  
-    return None
     
+def check_for_string(row: list|dict, str_to_check: str) -> bool | None:
+    if isinstance(row, list):
+        return any(item == str_to_check for item in row)
+    elif isinstance(row, dict):
+        return row.get(str_to_check)
+    return None
