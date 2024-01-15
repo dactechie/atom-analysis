@@ -5,7 +5,9 @@
 from typing import Literal
 import mylogger
 from utils.io import get_data, read_parquet, write_parquet, read_csv_to_dataframe
-from data_prep import prep_dataframe, prep_dataframe_nada, limit_min_num_assessments, limit_clients_active_inperiod, prep_dataframe_episodes
+from data_prep import prep_dataframe, prep_dataframe_nada, limit_min_num_assessments \
+      , limit_clients_active_inperiod, prep_dataframe_episodes
+from data_config import  ATOM_DB_filters 
 from utils.df_ops_base import float_date_parser
 
 logger = mylogger.get(__name__)
@@ -18,10 +20,14 @@ logger = mylogger.get(__name__)
 #   - converting data types
 #   - normalizing data (if there are nested data structures like SurveyData)
 #   - caching the processed version
+
+# Note:  purpose =matching :  may be ACT also 
 def extract_prep_atom_data(extract_start_date, extract_end_date
                       , active_clients_start_date
                       , active_clients_end_date
-                      , fname, min_atoms_per_client = -1, purpose:Literal['NADA', 'Matching']='Matching') :#-> pd.DataFrame|None:
+                      , fname, min_atoms_per_client = -1
+                      , purpose:Literal['NADA', 'Matching']='Matching') :#-> pd.DataFrame|None:
+      
   
   processed_filepath = f"./data/processed/atom_{purpose}_{fname}.parquet"
   processed_df = read_parquet(processed_filepath)
@@ -31,7 +37,13 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
     return processed_df
   
   logger.info("No processed data found, loading from raw data.")
-  raw_df = get_data('ATOM',extract_start_date, extract_end_date, f"./data/in/atom_{purpose}_{fname}.parquet", cache=True)
+  
+  filters = ATOM_DB_filters[purpose]
+  raw_df = get_data('ATOM'
+                    ,extract_start_date, extract_end_date
+                    , f"./data/in/atom_{purpose}_{fname}.parquet"
+                    ,filters=filters
+                    , cache=True)
   
   if isinstance(raw_df, type(None)) or raw_df.empty:
     logger.error("No data found. Exiting.")

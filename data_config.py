@@ -5,7 +5,15 @@ keep_parent_fields = ['Program', 'Staff'] # if also in SurveyData
 #   'Matching':['Program', 'Staff']
 # }
 
-
+ATOM_DB_filters = {
+  # extract purpose
+  'NADA': {
+    'Program' : ('SAPPHIRE','EUROPATH','MONPATH','BEGAPATH'
+                 ,'MURMICE','GOLBGNRL','GOLBICE','MURMPP','MURMWIO','MURMHEAD',) 
+   },
+   'Matching':{}
+   
+  }
 # range
 # remove_if_under_threshold = {
 #      'PDCHowMuchPerOccasion' : {

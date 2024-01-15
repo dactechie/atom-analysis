@@ -1,5 +1,4 @@
 
-import json
 from typing import Literal
 import pandas as pd
 import mylogger
@@ -183,7 +182,7 @@ def prep_dataframe_nada(df:pd.DataFrame):
                  	'PrimaryCaregiver_5-15',	'Past4Wk_ViolentToYou',]
   df53 = convert_true_falsefields(df52, bool_fields)
    
-  df6 = df53[nada_cols]
+  df6 = df53[[c for c in df53.columns if c in nada_cols]]
 
   df7 = convert_dtypes(df6)  
   df7.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
