@@ -21,8 +21,6 @@ cols_to_remove =  ['FAMILY_NAME',	'GIVEN_NAME',	'MIDDLE_NAME',
                           'ILLICIT_USE', 'METHOD_OF_USE_PRINCIPAL_DRUG','INJECTING_DRUG_USE',
                           'INDIGENOUS_STATUS', 
                           'DOB',	'DOB_STATUS',	'SEX',	'CLIENT_TYPE'
-
-
                           ]
 
 def adjust_ccare_csv_for_aztable(df:pd.DataFrame):

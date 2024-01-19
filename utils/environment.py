@@ -15,7 +15,7 @@ class MyEnvironmentConfig:
     _instance = None
     env:str
     connection_string:str
-    matching_ndays_slack:int
+    matching_ndays_slack:int    
     # survey_table_name:str
 
     def __new__(cls):

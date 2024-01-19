@@ -38,9 +38,9 @@ table_config = {
   }
 }
 
-def get_results(table:str, start_date, end_date) -> list[dict]:
-    stq = SampleTablesQuery(table)
+def get_results(table:str, start_date, end_date, filters:dict|None={}) -> list[dict]:
     
+    stq = SampleTablesQuery(table)    
     
     tconfig = table_config.get(table, {})
     if not tconfig:
@@ -52,10 +52,17 @@ def get_results(table:str, start_date, end_date) -> list[dict]:
          
     # fields = [u"PartitionKey", u"RowKey", u"Program", u"Staff", u"SurveyName", u"SurveyData"]
     # name_filter = u"AssessmentDate ge @lower and AssessmentDate lt @upper and IsActive eq 1 and Program ne 'TEST' and Status eq 'Complete'"
+    all_filters = tconfig['filter']
+    if filters and 'Program' in filters:
+      prog_filter_list = [f"Program eq '{f}'" for f in filters['Program']]
+      progs_filter_str = f'({  " or ".join(prog_filter_list)  })'
+            #  (Program eq 'MURMICE' or Program eq 'EUROPATH' or Program eq 'BEGAPATH')
+      all_filters = f"{all_filters} and {progs_filter_str}"
+
 
     results = [
          dict(json_data)
          for json_data in 
-         stq.query_table(tconfig['fields'], filter_template=tconfig['filter'], query_params=assessment_commencement_date_limits)
+         stq.query_table(tconfig['fields'], filter_template=all_filters, query_params=assessment_commencement_date_limits)
          ]
     return results
