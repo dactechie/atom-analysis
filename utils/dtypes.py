@@ -53,9 +53,11 @@ def define_all_categories(df:pd.DataFrame):
   
 ###############################################
 
-def convert_to_datetime(df, column_names:list[str]|str):
+def convert_to_date(df:pd.DataFrame, column_names:list[str]|str) -> pd.DataFrame:
+  df[column_names] = pd.to_datetime(df[column_names].astype(str), format='%Y%m%d').dt.date
 
-  df [column_names] = pd.to_datetime(df[column_names], errors='coerce')
+  # df [column_names] = pd.to_datetime(df[column_names], errors='coerce')
+  return df
 
 """
       # fix_variants       
@@ -103,7 +105,7 @@ def convert_dtypes(df1):
   logger.debug(f"convert_dtypes")
   df = df1.copy()
   
-  convert_to_datetime(df,'AssessmentDate') # TODO : DOB
+  convert_to_date(df,'AssessmentDate') # TODO : DOB
   
   df1 = fix_variants(df) # Smokes -> Smoke   # NOT FOR NADA
   df2 = fix_numerics(df1)

@@ -4,13 +4,13 @@ import pandas as pd
 import mylogger
 from data_config import keep_parent_fields
 from utils.base import check_for_string
-from utils.dtypes import convert_dtypes, convert_to_datetime
+from utils.dtypes import convert_dtypes, convert_to_date
 from utils.df_ops_base import concat_drop_parent, \
-                            drop_notes_by_regex \
+                            drop_cols_contains_regex \
                       , normalize_first_element,  drop_fields,\
                           to_num_yn_none, to_num_bool_none,transform_multiple
 from utils.fromstr import clean_and_parse_json
-from data_config import EstablishmentID_Program, nada_cols #, activities_w_days
+from data_config import EstablishmentID_Program, nada_cols , ATOM_DROP_COLCONTAINS_REGEX
 from process_odc_cols import expand_drug_info
 
 logger = mylogger.get(__name__)
@@ -86,8 +86,7 @@ def prep_dataframe_episodes(df:pd.DataFrame) -> pd.DataFrame:
   rename_columns = {
       'SPECIFY_DRUG_OF_CONCERN': 'PDC',
       'START_DATE': 'CommencementDate',
-      'END_DATE': 'EndDate',
-      # 'RowKey': 'EpisodeID',      
+      'END_DATE': 'EndDate',         
   }  
   renamed_columns_of_interest = ['SLK','Program', 'CommencementDate', 'EndDate', 'PDC']
   processed_ep_df.rename(columns=rename_columns, inplace=True)
@@ -98,24 +97,15 @@ def prep_dataframe_episodes(df:pd.DataFrame) -> pd.DataFrame:
 def prep_dataframe_matching(df:pd.DataFrame):
   logger.debug(f"prep_dataframe of length {len(df)} : ")
 
-  df2 = get_surveydata_expanded(df.copy())
-  convert_to_datetime(df2, 'AssessmentDate')
+  df2 = convert_to_date(df.copy(), 'AssessmentDate')
   if 'SLK' in df2.columns:
-    df2.drop(columns=['SLK'], inplace=True) 
+    df2.drop(columns=['SLK'], inplace=True)
   
   df2.rename(columns={'PartitionKey': 'SLK'}, inplace=True)
-  df3 = normalize_first_element(df2,'PDC')
-  df4 = df3[['SLK', 'AssessmentDate', 'Program','Staff', 'RowKey', 'PDCSubstanceOrGambling']]
-  df4 = df4.rename(columns={'PDCSubstanceOrGambling': 'PDC'})
-  return df4
-
-
-  # df5 = normalize_first_element(df4,'PDC')
-
-# def get_val_or_none(dic, key ):
-#   if dic and key in dic:
-#     return dic[key]
-#   return None
+  # df3 = normalize_first_element(df2,'PDC')
+  # df4 = df3[['SLK', 'AssessmentDate', 'Program','Staff', 'RowKey', 'PDCSubstanceOrGambling']]
+  # df4 = df4.rename(columns={'PDCSubstanceOrGambling': 'PDC'})
+  return df2
 
 
 def nadafield_from_multiselect(df1:pd.DataFrame) -> pd.DataFrame:
@@ -145,12 +135,6 @@ def nadafield_from_multiselect(df1:pd.DataFrame) -> pd.DataFrame:
   
   return df
 
-def convert_yes_nofields(df1, field_names):
-  return transform_multiple(df1, field_names,to_num_yn_none)
-
-def convert_true_falsefields(df1, field_names):
-  return transform_multiple(df1, field_names,to_num_bool_none)
-
   # df= df1.copy()
   # df[field_names] = df[field_names].apply(lambda x: '0' 
   #                                         if x =='No' else '1' 
@@ -163,11 +147,11 @@ def get_stage_per_episode(df:pd.DataFrame)-> pd.Series:
   return  df.groupby('PMSEpisodeID').cumcount()
 
 def prep_dataframe_nada(df:pd.DataFrame):
-
+  # TODO: Prep_dataframe_matching
   logger.debug(f"prep_dataframe of length {len(df)} : ")
   df2 = get_surveydata_expanded(df.copy())
  
-  df4 = drop_notes_by_regex(df2) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
+  df4 = drop_cols_contains_regex(df2, ATOM_DROP_COLCONTAINS_REGEX) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
 
   df5 = expand_drug_info(df4)
 
@@ -177,10 +161,10 @@ def prep_dataframe_nada(df:pd.DataFrame):
   
   yes_nofields = ['Past4WkBeenArrested', 'Past4WkHaveYouViolenceAbusive']
 
-  df52 = convert_yes_nofields(df51, yes_nofields)
+  df52 = transform_multiple(df51, yes_nofields,to_num_yn_none)
   bool_fields = ['ATOPHomeless',	'ATOPRiskEviction',	'PrimaryCaregiver_0-5',
                  	'PrimaryCaregiver_5-15',	'Past4Wk_ViolentToYou',]
-  df53 = convert_true_falsefields(df52, bool_fields)
+  df53 = transform_multiple(df52, bool_fields,to_num_bool_none)
    
   df6 = df53[[c for c in df53.columns if c in nada_cols]]
 
@@ -201,7 +185,7 @@ def prep_dataframe(df:pd.DataFrame, prep_type: Literal['ATOM', 'NADA', 'Matching
   df2 = get_surveydata_expanded(df.copy())
 
   df3 = drop_fields(df2,['ODC'])
-  df4 = drop_notes_by_regex(df3) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
+  df4 = drop_cols_contains_regex(df3, ATOM_DROP_COLCONTAINS_REGEX) # remove *Goals notes, so do before PDC step (PDCGoals dropdown)
   df5 = normalize_first_element(df4,'PDC') #TODO: (df,'ODC') # only takes the first ODC   
 
  

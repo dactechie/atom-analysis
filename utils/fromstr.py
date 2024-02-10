@@ -14,17 +14,29 @@ def is_numeric(value):
         return False
     
     
+# def range_average(range_str:str, separator:str='-'):
+  
+#   if is_numeric(range_str):
+#     return float(range_str)  
+  
+#   elif separator in range_str:
+#     two_ints = range_str.split(separator)
+#     return (int(two_ints[0])+int(two_ints[1]))/2
+   
+#   else:
+#     return np.nan
+  
 def range_average(range_str:str, separator:str='-'):
   
-  if is_numeric(range_str):
-    return float(range_str)  
+  if is_numeric(range_str):    
+    return int(np.ceil(float(range_str)))
   
   elif separator in range_str:
     two_ints = range_str.split(separator)
-    return (int(two_ints[0])+int(two_ints[1]))/2
+    return int(round((int(two_ints[0])+int(two_ints[1]))/2,0))
    
   else:
-    return np.nan
+    return np.nan    
   
 
 # Function to safely parse JSON and handle errors

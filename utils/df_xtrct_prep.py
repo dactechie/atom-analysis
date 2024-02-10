@@ -7,10 +7,39 @@ import mylogger
 from utils.io import get_data, read_parquet, write_parquet, read_csv_to_dataframe
 from data_prep import prep_dataframe, prep_dataframe_nada, limit_min_num_assessments \
       , limit_clients_active_inperiod, prep_dataframe_episodes
-from data_config import  ATOM_DB_filters 
+from data_config import  ATOM_DB_filters, ATOM_DB_fields
 from utils.df_ops_base import float_date_parser
 
 logger = mylogger.get(__name__)
+
+"""
+  two types:
+    get data for matching with episodes - just SLK, AssessmentDate
+"""
+def get_atoms(extract_start_date, extract_end_date
+                      , fname
+                      , purpose:Literal['NADA', 'Matching']='Matching') :
+      
+  if purpose != 'Matching':
+    fields = ATOM_DB_fields['All']
+  else:
+    fields = ATOM_DB_fields['Matching']
+  
+  filters = ATOM_DB_filters[purpose]
+  
+  raw_df = get_data('ATOM'
+                    ,extract_start_date, extract_end_date
+                    , f"./data/in/atom_{purpose}_{fname}.parquet"
+                    ,fields=fields
+                    ,filters=filters
+                    , cache=True)
+  
+  
+  
+  return raw_df
+  
+
+
 
 # if there is no pre-processed data, then extract and process it
 # Processing it includes:
@@ -28,27 +57,25 @@ def extract_prep_atom_data(extract_start_date, extract_end_date
                       , fname, min_atoms_per_client = -1
                       , purpose:Literal['NADA', 'Matching']='Matching') :#-> pd.DataFrame|None:
       
-  
   processed_filepath = f"./data/processed/atom_{purpose}_{fname}.parquet"
   processed_df = read_parquet(processed_filepath)
   
   if not(isinstance(processed_df, type(None)) or processed_df.empty):
     logger.debug("found & returning pre-processed parquet file.")
-    return processed_df
-  
+    if purpose != 'Matching': 
+      return processed_df
+    else:
+      proessed_matching_df = processed_df [['SLK', 'AssessmentType', 'AssessmentDate']]
+      return proessed_matching_df
+    
   logger.info("No processed data found, loading from raw data.")
-  
-  filters = ATOM_DB_filters[purpose]
-  raw_df = get_data('ATOM'
-                    ,extract_start_date, extract_end_date
-                    , f"./data/in/atom_{purpose}_{fname}.parquet"
-                    ,filters=filters
-                    , cache=True)
-  
+  raw_df = get_atoms(extract_start_date, extract_end_date
+                      , fname
+                      , purpose)
+
   if isinstance(raw_df, type(None)) or raw_df.empty:
-    logger.error("No data found. Exiting.")
-    exit(1)
-  
+    logger.error("No data found. returning None")
+    return None  
   # Clean and Transform the dataset
   if purpose == 'NADA':
     processed_df = prep_dataframe_nada(raw_df)

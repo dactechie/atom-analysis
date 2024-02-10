@@ -1,94 +1,61 @@
 
 import pandas as pd
 import mylogger
-from utils.df_xtrct_prep import extract_prep_atom_data, extract_prep_episode_data
+from utils.df_xtrct_prep import get_atoms, extract_prep_episode_data
+from data_prep import prep_dataframe_matching
 from utils.df_ops_base import get_right_only, get_lr_mux_unmatched
+from matcher import match_increasing_slack
 from utils.environment import MyEnvironmentConfig
 
 logger = mylogger.get(__name__)
 
-# def min_gaps_from_boundaries(atoms_df, eps_df ):#assessment_dates:pd.Series, eps_start:pd.Series, eps_end:pd.Series):
 
 
-# def match_exclude(atoms, eps):
+# def get_mask_datefit(row, slack_days=30):
+#     # Convert to datetime if not already in that format
+#     # assessment_date = pd.to_datetime(row['AssessmentDate'], errors='coerce')
+#     # commencement_date = pd.to_datetime(row['CommencementDate'], errors='coerce')
+#     # end_date = pd.to_datetime(row['EndDate'], errors='coerce')
 
-
-# def first_last_atoms_inepisode():
-
-#     # Merge using inner join, preserving indices
-#     merged_df = pd.merge(df1, df2, how='inner', left_index=True, right_index=True)
-
-#     first_assessment_idx = matched_df.groupby(['SLK', 'Program', 'CommencementDate', 'EndDate'])['AssessmentDate'].idxmin()
-#     last_assessment_idx = matched_df.groupby(['SLK', 'Program', 'CommencementDate', 'EndDate'])['AssessmentDate'].idxmax()
-#     # Create new columns to flag the first and last AssessmentDate within each episode
-#     matched_df['is_first_assessment'] = 0  # Initialize with zeros
-#     matched_df['is_last_assessment'] = 0  # Initialize with zeros
-
-#     # Set flags for first and last assessments
-#     matched_df.loc[first_assessment_idx, 'is_first_assessment'] = 1
-#     matched_df.loc[last_assessment_idx, 'is_last_assessment'] = 1
-
-
-# def get_mask_datefit(assessment_date: pd.Series, episode_commencement_date: pd.Series, episode_end_date: pd.Series, slack_days=30):
+#     # Create a Timedelta for slack days
 #     slack_td = pd.Timedelta(days=slack_days)
 
-#     after_commencement = assessment_date >= (
-#         episode_commencement_date - slack_td)
+#     # Check conditions
+#     after_commencement = row['AssessmentDate'].date() >= (row['CommencementDate'] - slack_td)
+#     before_end_date = row['AssessmentDate'].date() <= (row['EndDate'] + slack_td)
 
-#     after_start_ongoing_ep = pd.isna(episode_end_date) & after_commencement
+#     return after_commencement and before_end_date
 
-#     within_ep_dates = pd.notna(episode_end_date) & after_commencement & \
-#         (assessment_date <= (episode_end_date + slack_td))
-
-#     return within_ep_dates | after_start_ongoing_ep
-
-
-
-def get_mask_datefit(row, slack_days=30):
-    # Convert to datetime if not already in that format
-    # assessment_date = pd.to_datetime(row['AssessmentDate'], errors='coerce')
-    # commencement_date = pd.to_datetime(row['CommencementDate'], errors='coerce')
-    # end_date = pd.to_datetime(row['EndDate'], errors='coerce')
-
-    # Create a Timedelta for slack days
-    slack_td = pd.Timedelta(days=slack_days)
-
-    # Check conditions
-    after_commencement = row['AssessmentDate'].date() >= (row['CommencementDate'] - slack_td)
-    before_end_date = row['AssessmentDate'].date() <= (row['EndDate'] + slack_td)
-
-    return after_commencement and before_end_date
-
-# def assessment_fit_episode(assessment_date: pd.Series, episode_commencement_date: pd.Series, episode_end_date: pd.Series, slack_days=30):
-#     if
-#     return (assessment_date >= (episode_commencement_date - pd.Timedelta(days=slack_days))) & \
-#            (assessment_date <= (episode_end_date + pd.Timedelta(days=slack_days)))
+# # def assessment_fit_episode(assessment_date: pd.Series, episode_commencement_date: pd.Series, episode_end_date: pd.Series, slack_days=30):
+# #     if
+# #     return (assessment_date >= (episode_commencement_date - pd.Timedelta(days=slack_days))) & \
+# #            (assessment_date <= (episode_end_date + pd.Timedelta(days=slack_days)))
 
 
-def match_assessments(episodes_df, atoms_df, matching_ndays_slack: int):
+# def match_assessments(episodes_df, atoms_df, matching_ndays_slack: int):
 
-    # Merge the dataframes on SLK and Program
-    df = pd.merge(episodes_df, atoms_df, how='inner', left_on=[
-                  'SLK', 'Program'], right_on=['SLK', 'Program'])
+#     # Merge the dataframes on SLK and Program
+#     df = pd.merge(episodes_df, atoms_df, how='inner', left_on=[
+#                   'SLK', 'Program'], right_on=['SLK', 'Program'])
 
-    # Filter rows where AssessmentDate falls within CommencementDate and EndDate (or after CommencementDate if EndDate is NaN)
-    mask = df.apply(get_mask_datefit, slack_days=matching_ndays_slack, axis=1)
-    # mask = get_mask_datefit(df['AssessmentDate'], df['CommencementDate'],
-    #                         df['EndDate'], slack_days=matching_ndays_slack)
-    filtered_df = df[mask]
-    # matched_df = merged_df.loc[((merged_df['AssessmentDate'] >= merged_df['CommencementDate']) &
-    #                             (merged_df['AssessmentDate'] <= merged_df['EndDate'])) |
-    #                            ((merged_df['AssessmentDate'] >= merged_df['CommencementDate']) &
-    #                             (merged_df['EndDate'].isna()))]
+#     # Filter rows where AssessmentDate falls within CommencementDate and EndDate (or after CommencementDate if EndDate is NaN)
+#     mask = df.apply(get_mask_datefit, slack_days=matching_ndays_slack, axis=1)
+#     # mask = get_mask_datefit(df['AssessmentDate'], df['CommencementDate'],
+#     #                         df['EndDate'], slack_days=matching_ndays_slack)
+#     filtered_df = df[mask]
+#     # matched_df = merged_df.loc[((merged_df['AssessmentDate'] >= merged_df['CommencementDate']) &
+#     #                             (merged_df['AssessmentDate'] <= merged_df['EndDate'])) |
+#     #                            ((merged_df['AssessmentDate'] >= merged_df['CommencementDate']) &
+#     #                             (merged_df['EndDate'].isna()))]
 
-    # Check if PDCSubstanceOfConcern matches
-    # mismatched_df = matched_df.loc[matched_df['PDCSubstanceOfConcern_x'] != matched_df['PDCSubstanceOfConcern_y']]
+#     # Check if PDCSubstanceOfConcern matches
+#     # mismatched_df = matched_df.loc[matched_df['PDCSubstanceOfConcern_x'] != matched_df['PDCSubstanceOfConcern_y']]
 
-    # if len(mismatched_df) > 0:
-    #     logger.info(f"There are {len(mismatched_df)} rows where PDCSubstanceOfConcern does not match.")
-    #     logger.info(mismatched_df)
+#     # if len(mismatched_df) > 0:
+#     #     logger.info(f"There are {len(mismatched_df)} rows where PDCSubstanceOfConcern does not match.")
+#     #     logger.info(mismatched_df)
 
-    return filtered_df
+#     return filtered_df
 
 
 def get_unmatched_atoms(atoms: pd.DataFrame,
@@ -108,28 +75,37 @@ def get_unmatched_atoms(atoms: pd.DataFrame,
 
 
 def get_matched_unmatched_atoms(atoms: pd.DataFrame, processed_ep_df: pd.DataFrame):
-
-    matched = match_assessments(
-        processed_ep_df, atoms, MyEnvironmentConfig().matching_ndays_slack)
+    matching_ndays_slack = 7
+    matched_df, unmatched_atoms = match_increasing_slack(processed_ep_df, atoms, matching_ndays_slack)
+    # matched = match_assessments(
+    #     processed_ep_df, atoms, MyEnvironmentConfig().matching_ndays_slack)
     # processed_ep_df = load_and_parse_episode_csvs("./data/in/NSW_CSV/")
-    unmatched_atoms_df = get_unmatched_atoms(atoms, matched)
+    unmatched_atoms_df = get_unmatched_atoms(atoms, matched_df)
 
-    return unmatched_atoms_df, matched
+    return unmatched_atoms_df, matched_df
 
+def do_audits_perform_match (ep_df, atoms_df):
+    atoms_df['SLK_RowKey'] =  atoms_df['SLK'] + '_' + atoms_df['RowKey']
+    unmatched_atoms_df, matched_df= get_matched_unmatched_atoms(atoms_df, ep_df)
+    # TODO  get the audit dict 
+    return {}
 
-def extract_atom_n_episodes(extract_start_date, extract_end_date) -> tuple[pd.DataFrame, pd.DataFrame]:
+def extract_atom_n_episodes(extract_start_date, extract_end_date) -> tuple[pd.DataFrame|None, pd.DataFrame|None]:
     fname = f"{extract_start_date}-{extract_end_date}"
 
-    active_clients_start_date = None  # '2020-01-01'
-    active_clients_end_date = None  # '2023-09-15'
-    processed_atom_df = extract_prep_atom_data(
-        extract_start_date, extract_end_date, active_clients_start_date, active_clients_end_date, fname, purpose='Matching')
+    # active_clients_start_date = None  # '2020-01-01'
+    # active_clients_end_date = None  # '2023-09-15'
+    raw_atom_df = get_atoms(
+        extract_start_date, extract_end_date, fname, purpose='Matching')
+    if isinstance(raw_atom_df, type(None)) or raw_atom_df.empty:
+      logger.error("No data found. returning None")
+      return None, None
     processed_ep_df = extract_prep_episode_data(
         extract_start_date, extract_end_date, f"Matching_eps_{fname}")
     logger.debug(f"extract_atom_n_episodes: Extract Period {fname}")
-    logger.debug(f"extract_atom_n_episodes: ATOMs {len(processed_atom_df)}")
+    logger.debug(f"extract_atom_n_episodes: ATOMs {len(raw_atom_df)}")
     logger.debug(f"extract_atom_n_episodes: Episodes {len(processed_ep_df)}")
-    return processed_atom_df, processed_ep_df
+    return raw_atom_df, processed_ep_df
 
 
 # def program_mismatch(ep_df: pd.DataFrame, unmatched_atoms_df: pd.DataFrame) -> pd.DataFrame:
@@ -178,8 +154,8 @@ def get_unmatched_by_col(ep_df: pd.DataFrame, atoms_df: pd.DataFrame
     atoms__noep_for_slk = atoms_df.loc[~atoms_df[col_str].isin(ep_df[col_str])]
     eps__noatom_for_slk = ep_df.loc[~ep_df[col_str].isin(atoms_df[col_str])]
 
-    atoms__noep_for_slk.sort_values(by=col_str, ascending=True, inplace=True)
-    eps__noatom_for_slk.sort_values(by=col_str, ascending=True, inplace=True)
+    # atoms__noep_for_slk.sort_values(by=col_str, ascending=True, inplace=True)
+    # eps__noatom_for_slk.sort_values(by=col_str, ascending=True, inplace=True)
 
     # remove from original dfs
     e = ep_df.loc[~ep_df[col_str].isin(eps__noatom_for_slk['SLK'])]
@@ -193,7 +169,7 @@ do all audits  and return results
 """
 
 
-def do_audits(ep_df, atoms_df):
+def do_audits_slk_program(ep_df, atoms_df):
     # SLK in atom but not in Episodes
     # atoms__noep_for_slk = unmatched_atoms_df.loc[~unmatched_atoms_df['SLK'].isin(
     #     ep_df['SLK'])]
@@ -217,6 +193,7 @@ def do_audits(ep_df, atoms_df):
     # return unmatched_atoms_df
 
 
+
 def main(env='local'):
     MyEnvironmentConfig().setup(env)
     extract_start_date = 20230701  # 20230501 #20220701
@@ -227,7 +204,15 @@ def main(env='local'):
 
     # unmatched_atoms_df, matched = get_matched_unmatched_atoms(
     #     atoms, processed_ep_df)
-    audit_results, matched_eps, matched_atoms = do_audits(processed_ep_df, atoms)
+    if isinstance(atoms, type(None)) or atoms.empty:
+        return None, None, None
+    
+    prepd_atoms = prep_dataframe_matching(atoms) # PartitionKey To SLK and AssesmsnetDate to pd.dateTime
+    audit_results, matched_eps, matched_atoms = do_audits_slk_program(processed_ep_df, prepd_atoms)
+    
+    
+    do_audits_perform_match (processed_ep_df, matched_atoms)
+    #TODO : get and log the results of the audits from this too
 
     write_audit_results_csv(
         audit_results, f"{extract_start_date}-{extract_end_date}")

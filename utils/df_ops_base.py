@@ -50,7 +50,7 @@ def float_date_parser(date_val):
         return None  # or choose an appropriate default value
     
 
-def drop_fields(df:pd.DataFrame, fieldnames:list or str or tuple):
+def drop_fields(df:pd.DataFrame, fieldnames:list | str | tuple):
   df2 = df.drop(fieldnames, axis=1)
   return df2
 
@@ -65,9 +65,9 @@ def get_non_empty_list_items(df:pd.DataFrame, field_name:str) -> pd.DataFrame:
 
 
 #df.loc[:,~df.columns.str.contains('num')]
-def drop_notes_by_regex(df):
+def drop_cols_contains_regex(df, colname_like_reg):
   # 'OtherAddictiveBehaviours.Other (detail in notes below)'
-  df2 = df.loc[:,~df.columns.str.contains('Comment|Note|ITSP', case=False)]
+  df2 = df.loc[:,~df.columns.str.contains(colname_like_reg, case=False)]
 
   # df2 = df.loc[:,~df.columns.str.contains('Comment', regex=False)  # & ~df.columns.str.contains('Note', regex=False) 
   #            ]
@@ -111,10 +111,10 @@ def get_lr_mux_unmatched(left_df:pd.DataFrame, right_df:pd.DataFrame, merge_cols
 
   merged_df = pd.merge(left_df, right_df, on=merge_cols, how='outer', indicator=True)
   # Get non-matching rows for df1
-  left_non_matching = merged_df[merged_df['_merge'] == 'left_only']
+  left_non_matching = merged_df[merged_df['_merge'] == 'left_only'].copy() # copy to prevent SettingWithCopyWarning
 
   # Get non-matching rows for df2
-  right_non_matching = merged_df[merged_df['_merge'] == 'right_only']
+  right_non_matching = merged_df[merged_df['_merge'] == 'right_only'].copy() # copy to prevent SettingWithCopyWarning
   # Left outer join and filter for non-matching records
   # left_non_matching = pd.merge(left_df, right_df, how='left', left_on=merge_cols, right_on=merge_cols, indicator=True)
   # left_non_matching = left_non_matching[left_non_matching['_merge'] == 'left_only']

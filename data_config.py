@@ -5,6 +5,8 @@ keep_parent_fields = ['Program', 'Staff'] # if also in SurveyData
 #   'Matching':['Program', 'Staff']
 # }
 
+ATOM_DROP_COLCONTAINS_REGEX = 'Comment|Note|ITSP'
+
 ATOM_DB_filters = {
   # extract purpose
   'NADA': {
@@ -14,6 +16,15 @@ ATOM_DB_filters = {
    'Matching':{}
    
   }
+
+ATOM_DB_fields = {
+    "All": (u"PartitionKey", u"RowKey", u"Program", u"Staff", u"SurveyName", u"SurveyData"),     
+    "Matching": (u"PartitionKey"
+                 , u"AssessmentDate", u"Program", u"Staff", u"SurveyName"
+                  , u"RowKey" # contains Program, AssessmentDate and SurveyCode,
+                 , u"Staff"),
+}
+
 # range
 # remove_if_under_threshold = {
 #      'PDCHowMuchPerOccasion' : {
